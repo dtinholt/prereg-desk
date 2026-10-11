@@ -1,0 +1,2103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Pre-Registration Desk</title>
+<meta name="description" content="Write a study plan as numbers, freeze it under a SHA-256 hash, amend it with chained addenda, and later check a result against what was registered.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3f0e6; --ink:#1c1d19; --graphite:#5d5f55; --rule:#d3cdb9; --ledger:#1d4a6b; --stamp:#a3361d;
+  --field:#faf8f1;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --paper:#171814; --ink:#e7e3d5; --graphite:#a09f93; --rule:#3a3a32; --ledger:#93bcdc; --stamp:#e58d6c; --field:#1e1f1a; }
+}
+:root[data-theme="dark"]{ --paper:#171814; --ink:#e7e3d5; --graphite:#a09f93; --rule:#3a3a32; --ledger:#93bcdc; --stamp:#e58d6c; --field:#1e1f1a; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.55 var(--body);font-variant-numeric:tabular-nums;overflow-x:hidden}
+.frame{max-width:76rem;margin:0 auto;padding:0 16px}
+a{color:var(--ledger);text-decoration-thickness:1px;text-underline-offset:.2em}
+h1,h2,h3,h4{font-family:var(--display);font-weight:500;letter-spacing:-.01em;margin:0}
+p{margin:0 0 .9rem;max-width:66ch}
+.mono{font-family:var(--mono);font-size:.78rem;letter-spacing:.01em;color:var(--graphite)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+code{font-family:var(--mono);font-size:.9em}
+
+.masthead{border-top:4px solid var(--ink);border-bottom:1px solid var(--ink)}
+.mast{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.2rem 2rem;padding-top:.8rem;padding-bottom:.6rem}
+.brand{font-family:var(--display);font-size:1.45rem;font-weight:600;line-height:1.1}
+.register{margin:0;font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--graphite)}
+
+.pagehead{padding:1.6rem 0 1.2rem;border-bottom:3px double var(--ink)}
+.kicker{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;color:var(--graphite);margin:0 0 .6rem}
+.pagehead h1{font-size:2.2rem;line-height:1.1;margin-bottom:.7rem;font-variation-settings:"opsz" 60}
+.lede{font-size:1.1rem;line-height:1.5;max-width:62ch;margin:0}
+
+.tabs{display:flex;flex-wrap:wrap;gap:0 1.5rem;border-bottom:1px solid var(--ink);margin-top:1.2rem}
+.tabs button{appearance:none;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:.55rem 0;font:500 1rem var(--body);color:var(--graphite);cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ledger)}
+.tabs button:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--ledger);outline-offset:2px}
+.tabs .num{font-family:var(--mono);font-size:.74rem;margin-right:.35rem;color:var(--graphite)}
+
+main{padding:1.5rem 0 3rem}
+[hidden]{display:none!important}
+
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:2rem}
+@media (min-width:62rem){
+  .cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2.5rem}
+  .sticky{position:sticky;top:1rem;align-self:start;max-height:calc(100vh - 2rem);display:flex;flex-direction:column}
+  .sticky pre{flex:1;min-height:0}
+}
+
+fieldset{border:0;border-top:1px solid var(--rule);margin:0;padding:1rem 0 .4rem;min-width:0}
+legend{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--graphite);padding:0 .5rem 0 0}
+label{display:block;font-size:.88rem;font-weight:500;margin:.15rem 0 .25rem}
+label .hint{font-weight:400;color:var(--graphite)}
+.field{margin-bottom:.85rem}
+input[type=text],input[type=number],input[type=search],textarea,select{width:100%;font:400 .95rem/1.45 var(--body);color:var(--ink);background:var(--field);border:1px solid var(--rule);border-radius:2px;padding:.45rem .55rem}
+input[inputmode=decimal]{font-family:var(--mono)}
+textarea{min-height:4.6rem;resize:vertical}
+input:read-only,input:disabled,select:disabled{background:transparent;border-style:dashed;color:var(--ink);opacity:1}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem}
+@media (max-width:30rem){ .row3{grid-template-columns:repeat(2,minmax(0,1fr))} .row3 .wide{grid-column:1/-1} }
+
+fieldset.hyp,fieldset.kc{position:relative;border:1px solid var(--rule);border-left:3px solid var(--ledger);padding:2.6rem .8rem .2rem;margin:0 0 .9rem;background:transparent}
+fieldset.kc{border-left-color:var(--graphite)}
+fieldset.hyp legend,fieldset.kc legend{position:absolute;top:.85rem;left:.8rem;padding:0;color:var(--ink);font-weight:500;text-transform:none;letter-spacing:.01em;font-size:.8rem}
+fieldset.hyp .rm,fieldset.kc .rm{position:absolute;top:.55rem;right:.8rem}
+.typehelp{margin:-.4rem 0 .7rem;font-size:.82rem;color:var(--graphite)}
+
+button.act{appearance:none;font:500 .9rem var(--body);color:var(--ink);background:transparent;border:1px solid var(--ink);border-radius:2px;padding:.45rem .9rem;cursor:pointer}
+button.act:hover{background:var(--field)}
+button.act:disabled{opacity:.55;cursor:progress}
+button.primary{background:var(--ledger);border-color:var(--ledger);color:var(--paper)}
+button.primary:hover{background:var(--ledger);opacity:.9}
+button.quiet{border-color:var(--rule);color:var(--graphite);font-size:.82rem;padding:.3rem .65rem}
+label.act{display:inline-block;font:500 .82rem var(--body);color:var(--graphite);border:1px solid var(--rule);border-radius:2px;padding:.3rem .65rem;margin:0;cursor:pointer}
+label.act:focus-within{outline:2px solid var(--ledger);outline-offset:2px}
+.actions{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.8rem 0}
+
+.preview-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:.5rem;border-bottom:1px solid var(--ink);padding-bottom:.35rem}
+.preview-head h2{font-size:1.2rem}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:2px}
+.seg button{appearance:none;background:none;border:0;padding:.25rem .7rem;font:500 .78rem var(--mono);color:var(--graphite);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+pre{font-family:var(--mono);font-size:.76rem;line-height:1.5;background:var(--field);border:1px solid var(--rule);border-top:0;padding:.8rem;margin:0;overflow:auto;white-space:pre-wrap;word-break:break-word;max-height:34rem}
+pre.cmd{border-top:1px solid var(--rule);max-height:none;margin:.3rem 0 .4rem;user-select:all}
+
+.frozen{border-top:3px double var(--ink);border-bottom:1px solid var(--rule);padding:1rem 0;margin:1.2rem 0}
+.frozen h3{font-size:1.15rem;margin-bottom:.5rem}
+.hash{font-family:var(--mono);font-size:.86rem;font-weight:500;word-break:break-all;background:var(--field);border:1px solid var(--rule);padding:.6rem .7rem;margin:.3rem 0 .6rem;user-select:all}
+.facts{margin:0}
+.facts div{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:.8rem;padding:.35rem 0;border-bottom:1px solid var(--rule)}
+.facts dt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--graphite);padding-top:.15rem}
+.facts dd{margin:0;overflow-wrap:anywhere}
+@media (max-width:30rem){ .facts div{grid-template-columns:1fr;gap:.1rem} }
+.note{font-size:.88rem;color:var(--graphite)}
+.errors{color:var(--stamp);font-size:.9rem;margin:.4rem 0}
+.errors:empty{display:none}
+.errors div{margin-bottom:.15rem}
+
+.witness{border-top:1px solid var(--ink);margin-top:1rem;padding-top:.8rem}
+.witness .hash{word-break:normal;overflow-wrap:anywhere}
+.witness h4{font-size:1.05rem;margin-bottom:.4rem}
+.witness label{margin-top:.6rem}
+details{margin:.6rem 0}
+summary{cursor:pointer;font-size:.9rem;font-weight:500}
+details p{margin-top:.5rem}
+
+.drop{border:1.5px dashed var(--graphite);border-radius:2px;padding:1.6rem 1rem;text-align:center;cursor:pointer;color:var(--graphite)}
+.drop:focus-within{outline:2px solid var(--ledger);outline-offset:2px}
+.drop.over{border-color:var(--ledger);color:var(--ledger)}
+.drop strong{color:var(--ink);font-weight:500}
+
+.stamp{display:inline-block;padding:.05rem .45rem;border:1.5px solid currentColor;border-radius:2px;font-family:var(--mono);font-size:.7rem;font-weight:500;text-transform:uppercase;letter-spacing:.09em;line-height:1.5;color:var(--graphite);white-space:nowrap}
+.stamp.ok{color:var(--ledger)}
+.stamp.bad{color:var(--stamp)}
+.stamp.ne{border-style:dashed}
+
+table.verdicts,table.plain{width:100%;border-collapse:collapse;margin:.6rem 0 1rem}
+table.verdicts caption,table.plain caption{text-align:left;font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--graphite);padding-bottom:.4rem}
+table.verdicts th,table.plain th{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--graphite);font-weight:400;text-align:left;padding:0 .8rem .35rem 0;border-bottom:1px solid var(--ink)}
+table.verdicts td,table.plain td{vertical-align:top;padding:.7rem .8rem .7rem 0;border-bottom:1px solid var(--rule)}
+table.plain td{padding:.45rem .8rem .45rem 0;font-size:.9rem}
+table.verdicts td.rule{width:28%}
+.locked{display:block;font-family:var(--mono);font-size:.8rem;line-height:1.45;border:1px dashed var(--rule);padding:.35rem .5rem;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
+table.verdicts td.meas input{max-width:9rem;margin-bottom:.3rem}
+table.verdicts td.meas label{font-size:.75rem;font-weight:400;color:var(--graphite);margin:0}
+.pred{font-size:.92rem}
+.pred .mono{display:block;margin-top:.2rem}
+@media (max-width:44rem){
+  table.verdicts thead,table.plain thead{display:none}
+  table.verdicts tr,table.plain tr{display:block;border-bottom:1px solid var(--rule);padding:.6rem 0}
+  table.verdicts td,table.plain td{display:block;border:0;padding:.2rem 0}
+  table.verdicts td.meas input{max-width:none}
+  table.verdicts td.rule{width:auto}
+}
+.lock{font-family:var(--mono);font-size:.7rem;color:var(--graphite)}
+.chain{list-style:none;margin:.4rem 0 1rem;padding:0;border-top:1px solid var(--ink)}
+.chain li{border-bottom:1px solid var(--rule);padding:.5rem 0}
+.chain .lh{display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:baseline}
+.chain .lh b{font-family:var(--display);font-weight:500;font-size:1.02rem}
+.chain .mono{display:block;word-break:break-all}
+.killbox{border-top:1px solid var(--rule);margin-top:.8rem;padding-top:.6rem}
+.killbox label{display:flex;gap:.55rem;align-items:flex-start;font-weight:400;font-size:.9rem;margin:.35rem 0}
+.killbox input{margin-top:.25rem;flex:none;width:1rem;height:1rem;accent-color:var(--ledger)}
+.tally{font-family:var(--mono);font-size:.78rem;color:var(--ink);margin:.4rem 0}
+.panel{border:1px solid var(--rule);background:var(--field);padding:1rem;margin:0 0 1.2rem}
+.panel h2{font-size:1.15rem;margin-bottom:.5rem}
+.flag{font-family:var(--mono);font-size:.7rem;color:var(--ink);font-weight:500;text-transform:uppercase;letter-spacing:.07em}
+.colophon{border-top:1px solid var(--ink);padding-top:1rem;padding-bottom:2.5rem;font-size:.85rem;color:var(--graphite)}
+.colophon p{margin-bottom:.35rem}
+
+/* ---------- print: only the registration document prints ---------- */
+#print-doc{display:none}
+@media print{
+  :root,:root:not([data-theme="light"]),:root[data-theme="dark"]{ --paper:#ffffff; --ink:#111111; --graphite:#4a4a44; --rule:#bdb8a6; --ledger:#1d4a6b; --stamp:#a3361d; --field:#ffffff; }
+  html,body{background:#fff}
+  body > *:not(#print-doc){display:none!important}
+  #print-doc{display:block;font:400 10.5pt/1.5 var(--body);color:var(--ink)}
+  #print-doc .title-page{break-after:page;padding-top:30mm}
+  #print-doc .title-page .kicker{font-size:8pt}
+  #print-doc .title-page h1{font-size:26pt;line-height:1.15;margin:.4rem 0 1.4rem}
+  #print-doc h2{font-size:14pt;margin:1.2rem 0 .4rem;border-bottom:1px solid var(--ink);padding-bottom:.15rem;break-after:avoid}
+  #print-doc h3{font-size:11.5pt;margin:.8rem 0 .3rem;break-after:avoid}
+  #print-doc p{max-width:none;white-space:pre-wrap}
+  #print-doc .hash{font-size:8.5pt;background:#fff}
+  #print-doc table{width:100%;border-collapse:collapse;font-size:9pt;margin:.4rem 0}
+  #print-doc th{font-family:var(--mono);font-size:7pt;text-transform:uppercase;letter-spacing:.06em;text-align:left;border-bottom:1px solid var(--ink);padding:.2rem .4rem .2rem 0;color:var(--graphite);font-weight:400}
+  #print-doc td{border-bottom:1px solid var(--rule);padding:.3rem .4rem .3rem 0;vertical-align:top}
+  #print-doc tr{break-inside:avoid}
+  #print-doc .addendum{break-before:page}
+}
+</style>
+<style id="print-page-style">@page{margin:18mm 16mm 20mm}</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="frame mast">
+    <span class="brand">Dinand Tinholt &middot; Research</span>
+    <p class="register">Instruments &middot; delegation and oversight, measured</p>
+  </div>
+</header>
+
+<div class="frame">
+  <header class="pagehead">
+    <p class="kicker">Instrument &middot; works offline, nothing leaves this page</p>
+    <h1>The Pre-Registration Desk</h1>
+    <p class="lede">Write the study down as numbers before you run it. Freeze it and the page gives you a hash to post somewhere public. If the plan has to change, add a dated addendum that chains to the original. When the result comes in, drop the file back here to see each hypothesis marked against the rule you froze.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Desk">
+    <button role="tab" id="tab-register" aria-controls="panel-register" aria-selected="true"><span class="num">01</span>Register</button>
+    <button role="tab" id="tab-amend" aria-controls="panel-amend" aria-selected="false" tabindex="-1"><span class="num">02</span>Amend</button>
+    <button role="tab" id="tab-verify" aria-controls="panel-verify" aria-selected="false" tabindex="-1"><span class="num">03</span>Verify</button>
+  </div>
+</div>
+
+<main class="frame">
+
+<!-- REGISTER -->
+<section id="panel-register" role="tabpanel" aria-labelledby="tab-register">
+  <div class="actions">
+    <button class="act" id="btn-example" type="button">Load the Trial Balance example</button>
+    <button class="act" id="btn-example-dc" type="button">Load the Delegation Cliff example</button>
+    <button class="act" id="btn-import" type="button" aria-expanded="false" aria-controls="import">Import a PREREG markdown</button>
+    <button class="act quiet" id="btn-clear" type="button">Clear the draft</button>
+    <span class="mono" id="draft-status" aria-live="polite"></span>
+  </div>
+
+  <details id="examples-box">
+    <summary>Worked examples, one per hypothesis type</summary>
+    <table class="plain" id="examples-table">
+      <caption>Each row comes from a public campaign page at dinand.com/research. Measured values are what the page reports; none ship as inputs.</caption>
+      <thead><tr><th>Type</th><th>Row</th><th>What the page reports</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </details>
+
+  <section id="import" class="panel" hidden aria-labelledby="import-h">
+    <h2 id="import-h">Import a PREREG markdown</h2>
+    <p class="note">Paste a registration written in the house format, with numbered <code>##</code> sections and the hypotheses under a heading such as <code>## 4. Hypotheses</code>, as a table or as bold-labelled bullets. The reader is best effort: it shows what it found before anything touches the form.</p>
+    <div class="field"><label for="import-text">Markdown</label><textarea id="import-text" rows="8" spellcheck="false" style="font-family:var(--mono);font-size:.8rem"></textarea></div>
+    <div class="actions">
+      <label class="act" for="import-file">Choose a .md file<input type="file" id="import-file" accept=".md,.markdown,.txt,text/markdown,text/plain" class="sr"></label>
+      <button class="act" type="button" id="btn-import-read">Read it</button>
+      <button class="act quiet" type="button" id="btn-import-cancel">Close</button>
+    </div>
+    <div class="errors" id="import-errors" role="alert"></div>
+    <div id="import-review" hidden></div>
+  </section>
+
+  <div class="cols">
+    <form id="reg" autocomplete="off" novalidate>
+      <fieldset>
+        <legend>1 &middot; The question</legend>
+        <div class="field"><label for="f-title">Title</label><input type="text" id="f-title" name="title" placeholder="PREREG-SHORTNAME: the question in one line"></div>
+        <div class="field"><label for="f-question">Question <span class="hint">what the study answers, and the null that would mean the idea adds nothing</span></label><textarea id="f-question" name="question"></textarea></div>
+      </fieldset>
+      <fieldset>
+        <legend>2 &middot; Design and sample</legend>
+        <div class="field"><label for="f-design">Design <span class="hint">arms, blinding, who sees what and when</span></label><textarea id="f-design" name="design"></textarea></div>
+        <div class="row">
+          <div class="field"><label for="f-sample-size">Sample size</label><input type="text" id="f-sample-size" name="sample_size" placeholder="how many units"></div>
+          <div class="field"><label for="f-unit">Unit</label><input type="text" id="f-unit" name="sample_unit" placeholder="packet, task, run"></div>
+        </div>
+        <div class="field"><label for="f-draw">Draw rule <span class="hint">how units are chosen, ordered and assigned</span></label><textarea id="f-draw" name="draw_rule"></textarea></div>
+      </fieldset>
+      <fieldset>
+        <legend>3 &middot; Measures</legend>
+        <div class="field"><label for="f-measures">Measures <span class="hint">each quantity, its statistic and its interval</span></label><textarea id="f-measures" name="measures"></textarea></div>
+      </fieldset>
+      <fieldset>
+        <legend>4 &middot; Hypotheses, as numbers</legend>
+        <div id="hyps"></div>
+        <button class="act quiet" type="button" id="btn-add-h">Add a hypothesis</button>
+      </fieldset>
+      <fieldset>
+        <legend>5 &middot; Kill conditions</legend>
+        <p class="note">Each condition names the hypotheses it voids. Write <code>all</code> or a list of ids such as <code>H1, H3</code>. On the Verify tab you tick the ones that fired.</p>
+        <div id="kills"></div>
+        <button class="act quiet" type="button" id="btn-add-k">Add a kill condition</button>
+      </fieldset>
+      <fieldset>
+        <legend>6 &middot; Analysis and reporting</legend>
+        <div class="field"><label for="f-analysis">Analysis plan</label><textarea id="f-analysis" name="analysis_plan"></textarea></div>
+        <div class="field"><label for="f-reporting">Reporting <span class="hint">where results go and what they must show</span></label><textarea id="f-reporting" name="reporting"></textarea></div>
+        <div class="field"><label for="f-verifier">Who verifies <span class="hint">the independent pass that recomputes the numbers</span></label><input type="text" id="f-verifier" name="verifier"></div>
+      </fieldset>
+
+      <div class="errors" id="reg-errors" role="alert"></div>
+      <div class="actions">
+        <button class="act primary" type="submit" id="btn-freeze">Freeze and download</button>
+        <button class="act quiet" type="button" id="btn-print-draft">Print the draft</button>
+        <span class="note">Freezing hashes the plan with the current time inside it and saves a JSON and a markdown copy.</span>
+      </div>
+
+      <section class="frozen" id="frozen" hidden aria-live="polite">
+        <h3>Frozen</h3>
+        <dl class="facts">
+          <div><dt>SHA-256</dt><dd class="mono" id="frozen-hash" style="color:var(--ink)"></dd></div>
+          <div><dt>Frozen at</dt><dd><span class="mono" id="frozen-time" style="color:var(--ink)"></span> <span class="note">UTC, from this browser's clock</span></dd></div>
+          <div><dt>Files</dt><dd class="mono" id="frozen-files"></dd></div>
+        </dl>
+        <div id="frozen-witness"></div>
+        <div class="actions">
+          <button class="act quiet" type="button" id="btn-redownload">Download again</button>
+          <button class="act quiet" type="button" id="btn-print-frozen">Print or save as PDF</button>
+          <button class="act quiet" type="button" id="btn-to-amend">Write an addendum</button>
+          <button class="act quiet" type="button" id="btn-to-verify">Check it on the Verify tab</button>
+        </div>
+      </section>
+    </form>
+
+    <div class="sticky">
+      <div class="preview-head">
+        <h2>Live preview</h2>
+        <div class="seg" role="group" aria-label="Preview format">
+          <button type="button" data-view="json" aria-pressed="true">JSON</button>
+          <button type="button" data-view="md" aria-pressed="false">Markdown</button>
+        </div>
+      </div>
+      <pre id="preview" tabindex="0" aria-label="Preview of the registration"></pre>
+      <p class="mono" style="margin-top:.5rem">Canonical form: every string NFC-normalised, keys sorted at every level, two-space indent, LF line ends, no trailing newline, UTF-8. The hash covers the <code>registration</code> object in exactly this form, frozen time included.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AMEND -->
+<section id="panel-amend" role="tabpanel" aria-labelledby="tab-amend" hidden>
+  <div class="cols">
+    <div>
+      <label class="drop" id="a-drop" for="a-file" style="margin-top:.4rem;display:block">
+        <strong>Drop a frozen PREREG-&hellip;.json or &hellip;.chain.json here</strong><br>
+        <span class="note">or tap to choose one. The desk checks its hashes before it lets you amend it.</span>
+        <input type="file" id="a-file" accept=".json,application/json" class="sr">
+      </label>
+      <div class="errors" id="a-errors" role="alert"></div>
+
+      <form id="amend" autocomplete="off" novalidate hidden>
+        <fieldset>
+          <legend>Addendum</legend>
+          <div class="field"><label for="a-text">What changes, and why <span class="hint">the freeze stamps the date</span></label><textarea id="a-text" rows="5"></textarea></div>
+        </fieldset>
+        <fieldset>
+          <legend>New hypotheses <span style="text-transform:none;letter-spacing:0">(optional)</span></legend>
+          <p class="note">An addendum adds hypotheses beside the registered ones. The parent's rules stay as frozen, and each new row takes an id nobody has used.</p>
+          <div id="a-hyps"></div>
+          <button class="act quiet" type="button" id="btn-add-ah">Add a hypothesis to the addendum</button>
+        </fieldset>
+        <div class="errors" id="a-form-errors" role="alert"></div>
+        <div class="actions">
+          <button class="act primary" type="submit" id="btn-a-freeze">Freeze the addendum and download</button>
+          <span class="note">Saves the addendum on its own and a chain file holding the registration and every addendum.</span>
+        </div>
+        <section class="frozen" id="a-frozen" hidden aria-live="polite">
+          <h3>Addendum frozen</h3>
+          <dl class="facts">
+            <div><dt>SHA-256</dt><dd class="mono" id="a-frozen-hash" style="color:var(--ink)"></dd></div>
+            <div><dt>Parent</dt><dd class="mono" id="a-frozen-parent"></dd></div>
+            <div><dt>Frozen at</dt><dd><span class="mono" id="a-frozen-time" style="color:var(--ink)"></span> <span class="note">UTC, from this browser's clock</span></dd></div>
+            <div><dt>Files</dt><dd class="mono" id="a-frozen-files"></dd></div>
+          </dl>
+          <div id="a-witness"></div>
+          <div class="actions">
+            <button class="act quiet" type="button" id="btn-a-redownload">Download again</button>
+            <button class="act quiet" type="button" id="btn-a-print">Print the chain or save as PDF</button>
+            <button class="act quiet" type="button" id="btn-a-verify">Check the chain on the Verify tab</button>
+          </div>
+        </section>
+      </form>
+    </div>
+    <div id="a-summary">
+      <p class="note">Nothing loaded yet. Load a frozen registration, or a chain file to add a further addendum. Its hypotheses appear here, locked.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFY -->
+<section id="panel-verify" role="tabpanel" aria-labelledby="tab-verify" hidden>
+  <div class="cols">
+    <div>
+      <label class="drop" id="drop" for="file-in" style="margin-top:.4rem;display:block">
+        <strong>Drop a PREREG-&hellip;.json or &hellip;.chain.json here</strong><br>
+        <span class="note">or tap to choose one. The file is read in this tab and goes nowhere.</span>
+        <input type="file" id="file-in" accept=".json,application/json" class="sr">
+      </label>
+      <div class="errors" id="ver-errors" role="alert"></div>
+
+      <div class="field" style="margin-top:1rem">
+        <label for="public-hash">Hash you posted in public <span class="hint">optional, and the check that counts</span></label>
+        <input type="text" id="public-hash" spellcheck="false" placeholder="64 hex characters" style="font-family:var(--mono)">
+        <p class="note" style="margin-top:.4rem">Someone editing the file can rewrite the stored hash too. A hash posted before the run, somewhere with its own date, ties the file to that moment. Paste the hash of the registration or of any addendum.</p>
+      </div>
+      <div id="ver-kill" class="killbox" hidden></div>
+    </div>
+
+    <div id="ver-summary">
+      <p class="note">Nothing loaded yet. The integrity check, the chain of addenda and the verdict table appear here once a file is in.</p>
+    </div>
+  </div>
+
+  <div id="ver-table-wrap" hidden>
+    <p class="tally" id="ver-tally" aria-live="polite"></p>
+    <table class="verdicts" id="ver-table">
+      <caption>Each hypothesis against its own registered rule. Rules are locked to the file.</caption>
+      <thead><tr><th>Hypothesis</th><th>Registered rule</th><th>Measured</th><th>Verdict</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="mono" id="ver-demo-note" hidden></p>
+    <div class="actions">
+      <button class="act quiet" type="button" id="btn-verdict-md">Download the verdict table as markdown</button>
+      <button class="act quiet" type="button" id="btn-ver-print">Print the registration or save as PDF</button>
+      <button class="act quiet" type="button" id="btn-unload">Unload the file</button>
+    </div>
+    <p class="note">Each verdict compares the measured value with the frozen rule. Checking how the value was measured stays with the person named as verifier.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="frame"><div class="colophon">
+  <p>Fields follow step 2 of the research protocol at <a href="https://dinand.com/research/">dinand.com/research</a>: hypotheses, bands, statistics and kill conditions written down, dated and frozen before any unit runs.</p>
+  <p class="mono">Sources: methods page, step 2 &middot; worked examples from the Trial Balance and Delegation Cliff campaign pages at dinand.com/research &middot; hashing by the browser's Web Crypto API (SHA-256) &middot; self-check results in the developer console</p>
+</div></footer>
+
+<div id="print-doc" aria-hidden="true"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   1. Pure helpers (all covered by the console self-check)
+   ===================================================================== */
+const FORMAT = "prereg-desk/2";
+const FORMAT_V1 = "prereg-desk/1";
+const CANON = "every string NFC-normalised, keys sorted at every level, two-space indent, LF line ends, no trailing newline, UTF-8";
+const CLOCK = "browser clock, not externally witnessed";
+const MAX_FILE = 20 * 1024 * 1024;
+const MAX_DEPTH = 64;
+const PREVIEW_CAP = 200000;
+
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function str(x){ return x == null ? "" : String(x); }
+
+/* own keys only, set with defineProperty so a member named "__proto__" stays a member and is hashed */
+const own = (o, k) => o != null && Object.prototype.hasOwnProperty.call(o, k);
+function putKey(o, k, v){ Object.defineProperty(o, k, { value: v, enumerable: true, writable: true, configurable: true }); }
+function sortDeep(v){
+  if (Array.isArray(v)) return v.map(sortDeep);
+  if (v && typeof v === "object"){
+    const out = {};
+    for (const k of Object.keys(v).sort()) putKey(out, k, sortDeep(v[k]));
+    return out;
+  }
+  return v;
+}
+function nfcDeep(v){
+  if (typeof v === "string") return v.normalize("NFC");
+  if (Array.isArray(v)) return v.map(nfcDeep);
+  if (v && typeof v === "object"){
+    const out = {};
+    for (const k of Object.keys(v)){
+      const nk = k.normalize("NFC");
+      if (own(out, nk)) throw new Error(`Two keys normalise to the same text ("${nk}"), so the file cannot be canonicalised.`);
+      putKey(out, nk, nfcDeep(v[k]));
+    }
+    return out;
+  }
+  return v;
+}
+function canonical(obj){ return JSON.stringify(sortDeep(obj), null, 2); }
+/* v1 files were hashed without NFC; the format string sits inside the hashed member, so it cannot be swapped unseen */
+function canonicalFor(member){ return member && member.format === FORMAT_V1 ? canonical(member) : canonical(nfcDeep(member)); }
+
+async function sha256Hex(s){
+  if (!(window.crypto && crypto.subtle)) throw new Error("This browser does not expose Web Crypto here. Open the page from a local file or over https.");
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function depthOf(root){
+  let max = 0; const stack = [[root, 1]];
+  while (stack.length){
+    const [v, d] = stack.pop();
+    if (v && typeof v === "object"){
+      if (d > max) max = d;
+      if (max > MAX_DEPTH) return max;
+      for (const k in v) if (Object.prototype.hasOwnProperty.call(v, k)) stack.push([v[k], d + 1]);
+    }
+  }
+  return max;
+}
+
+function slugify(s){
+  const clean = x => x.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48).replace(/-+$/, "");
+  const all = String(s || "").normalize("NFC").toLowerCase().replace(/^prereg[-\s:]*/, "");
+  return clean(all.split(":")[0]) || clean(all) || "untitled";
+}
+
+/* numbers: plain decimals, exponent form, a unicode minus, or a fraction a/b. Commas and percent signs are refused. */
+const NUM_RE = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+function num(x){
+  if (x === null || x === undefined) return null;
+  if (typeof x === "number") return Number.isFinite(x) ? x : NaN;
+  const s = String(x).trim().replace(/\u2212/g, "-");
+  if (s === "") return null;
+  const f = /^(.+?)\s*\/\s*(.+)$/.exec(s);
+  if (f){
+    if (!NUM_RE.test(f[1]) || !NUM_RE.test(f[2])) return NaN;
+    const a = Number(f[1]), b = Number(f[2]);
+    return (b !== 0 && Number.isFinite(a / b)) ? a / b : NaN;
+  }
+  if (!NUM_RE.test(s)) return NaN;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+const fin = x => typeof x === "number" && Number.isFinite(x);
+const r12 = x => +x.toPrecision(12);     /* derived quantities only: keeps 0.3 - 0.1 equal to 0.2 */
+function oneLine(s, cap){
+  let t = String(s || "").normalize("NFC").replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ").replace(/\s+/g, " ").replace(/\|/g, "/").trim();
+  if (cap && t.length > cap) t = t.slice(0, cap - 1).trimEnd() + "\u2026";
+  return t;
+}
+
+/* =====================================================================
+   2. Hypothesis model: five types, each judged by its own rule
+   ===================================================================== */
+const TYPES = Object.assign(Object.create(null), {
+  threshold: { label: "Threshold", help: "One measured value against one number, with an optional predicted band shown for context." },
+  band:      { label: "Two-sided band", help: "Supported when the value lands between a and b, both ends included." },
+  direction: { label: "Direction with a minimum effect", help: "Supported when the signed effect moves the predicted way by at least the minimum. Enter the effect as after minus before, or arm minus control." },
+  ratio:     { label: "Ratio", help: "Two measured quantities; their ratio is compared with a bound. A zero denominator leaves the row not evaluable." },
+  ranking:   { label: "Ranking", help: "A above B by at least d. With d set to 0, A must be strictly above B. Higher is taken as above." }
+});
+const CMP = Object.assign(Object.create(null), { ">=": (a, b) => a >= b, ">": (a, b) => a > b, "<=": (a, b) => a <= b, "<": (a, b) => a < b });
+const SYM = Object.assign(Object.create(null), { ">=": "\u2265", ">": ">", "<=": "\u2264", "<": "<" });
+const MAP = Object.assign(Object.create(null), {
+  threshold: { measure: "t_measure", direction: "t_dir", threshold: "t_value", band_low: "t_lo", band_high: "t_hi" },
+  band:      { measure: "b_measure", band_low: "b_lo", band_high: "b_hi" },
+  direction: { measure: "d_measure", direction: "d_dir", min_effect: "d_min" },
+  ratio:     { numerator: "r_num", denominator: "r_den", direction: "r_dir", threshold: "r_value" },
+  ranking:   { a: "k_a", b: "k_b", min_gap: "k_gap" }
+});
+const isType = t => typeof t === "string" && own(TYPES, t);
+const cmpOf = d => typeof d === "string" && own(CMP, d) ? CMP[d] : null;
+const NUMERIC = new Set(["threshold", "band_low", "band_high", "min_effect", "min_gap"]);
+const RAW_DEFAULT = { id: "", type: "threshold", prediction: "", refutes: "", t_measure: "", t_dir: ">=", t_value: "", t_lo: "", t_hi: "",
+  b_measure: "", b_lo: "", b_hi: "", d_measure: "", d_dir: "increase", d_min: "", r_num: "", r_den: "", r_dir: "<=", r_value: "", k_a: "", k_b: "", k_gap: "" };
+
+function inferType(h){
+  if (!h || typeof h !== "object") return "threshold";
+  if (isType(h.type)) return h.type;
+  if (h.type) return "unknown";
+  return h.direction === "between" ? "band" : "threshold";   /* prereg-desk/1 rows */
+}
+function isRawHyp(h){ return !!h && Object.keys(MAP).some(t => Object.values(MAP[t]).some(k => k in h)); }
+function hypToRaw(h){
+  if (!h) return Object.assign({}, RAW_DEFAULT);
+  if (isRawHyp(h)) return Object.assign({}, RAW_DEFAULT, h);
+  const type = inferType(h) === "unknown" ? "threshold" : inferType(h);
+  const raw = Object.assign({}, RAW_DEFAULT, { id: str(h.id), type, prediction: str(h.prediction), refutes: str(h.refutes) });
+  for (const [sk, dk] of Object.entries(MAP[type])){
+    if (h[sk] != null && !(type === "band" && sk === "direction")) raw[dk] = String(h[sk]);
+  }
+  if (type === "threshold" && raw.t_dir === "between") raw.t_dir = ">=";
+  return raw;
+}
+function rawToStored(raw, parse){
+  const r = Object.assign({}, RAW_DEFAULT, raw || {});
+  const type = isType(r.type) ? r.type : "threshold";
+  const o = { id: str(r.id).trim(), type, prediction: str(r.prediction).trim(), refutes: str(r.refutes).trim() };
+  for (const [sk, dk] of Object.entries(MAP[type])){
+    const v = str(r[dk]).trim();
+    o[sk] = NUMERIC.has(sk) ? (parse ? num(v) : v) : v;
+  }
+  return o;
+}
+const fmt = x => fin(x) ? String(x) : "(not set)";
+/* display only: long binary fractions such as 1/3 shown to six significant figures; the file keeps the exact value */
+const fmtShow = x => !fin(x) ? "(not set)" : String(x).length > 10 ? `\u2248 ${+x.toPrecision(6)}` : String(x);
+function ruleText(h){
+  const T = inferType(h);
+  switch (T){
+    case "threshold": {
+      let r = `${h.measure || "value"} ${SYM[h.direction] || "?"} ${fmtShow(h.threshold)}`;
+      if (fin(h.band_low) && fin(h.band_high)) r += `  (predicted band ${h.band_low} to ${h.band_high})`;
+      return r;
+    }
+    case "band": return `${h.measure || "value"} between ${fmtShow(h.band_low)} and ${fmtShow(h.band_high)}, ends included`;
+    case "direction": return `${h.measure || "effect"} ${h.direction === "decrease" ? "falls" : "rises"} by at least ${fmtShow(h.min_effect)}`;
+    case "ratio": return `(${h.numerator || "numerator"}) \u00f7 (${h.denominator || "denominator"}) ${SYM[h.direction] || "?"} ${fmtShow(h.threshold)}`;
+    case "ranking": return fin(h.min_gap) && h.min_gap === 0 ? `${h.a || "A"} strictly above ${h.b || "B"}` : `${h.a || "A"} above ${h.b || "B"} by at least ${fmtShow(h.min_gap)}`;
+    default: return `unrecognised hypothesis type "${str(h.type)}"`;
+  }
+}
+/* markdown table cells, read back by the importer */
+function quantityCell(h){
+  const T = inferType(h);
+  if (T === "ratio") return `${h.numerator} \u00f7 ${h.denominator}`;
+  if (T === "ranking") return `${h.a} vs ${h.b}`;
+  return str(h.measure);
+}
+function ruleCell(h){
+  const T = inferType(h);
+  switch (T){
+    case "threshold": return `${SYM[h.direction] || "?"} ${fmt(h.threshold)}` + (fin(h.band_low) && fin(h.band_high) ? ` (band ${h.band_low} to ${h.band_high})` : "");
+    case "band": return `between ${fmt(h.band_low)} and ${fmt(h.band_high)}`;
+    case "direction": return `${h.direction === "decrease" ? "decrease" : "increase"} of at least ${fmt(h.min_effect)}`;
+    case "ratio": return `${SYM[h.direction] || "?"} ${fmt(h.threshold)}`;
+    case "ranking": return `first above second by at least ${fmt(h.min_gap)}`;
+    default: return "unrecognised";
+  }
+}
+function measuredParts(h){
+  const T = inferType(h);
+  if (T === "ratio") return [["num", "numerator"], ["den", "denominator"]];
+  if (T === "ranking") return [["a", "A"], ["b", "B"]];
+  if (T === "direction") return [["value", "signed effect"]];
+  return [["value", "value"]];
+}
+
+/* judge: reads only the frozen hypothesis and parsed measured numbers {value|num,den|a,b}
+   returns { status: incomplete | waiting | nan | supported | falsified | not-evaluable, note } */
+function judge(h, m){
+  const T = inferType(h);
+  const need = keys => { for (const k of keys){ if (m[k] === null || m[k] === undefined) return { status: "waiting" }; if (!fin(m[k])) return { status: "nan" }; } return null; };
+  let w;
+  switch (T){
+    case "threshold": {
+      if (!fin(h.threshold) || !cmpOf(h.direction)) return { status: "incomplete" };
+      if ((w = need(["value"]))) return w;
+      const ok = cmpOf(h.direction)(m.value, h.threshold);
+      let note = "";
+      if (fin(h.band_low) && fin(h.band_high)) note = m.value < h.band_low ? "below the predicted band" : m.value > h.band_high ? "above the predicted band" : "inside the predicted band";
+      return { status: ok ? "supported" : "falsified", note };
+    }
+    case "band": {
+      if (!fin(h.band_low) || !fin(h.band_high) || h.band_low > h.band_high) return { status: "incomplete" };
+      if ((w = need(["value"]))) return w;
+      const v = m.value;
+      return { status: v >= h.band_low && v <= h.band_high ? "supported" : "falsified", note: v < h.band_low ? "below the band" : v > h.band_high ? "above the band" : "inside the band" };
+    }
+    case "direction": {
+      if (!fin(h.min_effect) || h.min_effect < 0 || !["increase", "decrease"].includes(h.direction)) return { status: "incomplete" };
+      if ((w = need(["value"]))) return w;
+      const v = m.value, up = h.direction === "increase";
+      const size = up ? v : -v;
+      if (size <= 0) return { status: "falsified", note: v === 0 ? "no movement" : "moved the other way" };
+      return size >= h.min_effect ? { status: "supported", note: `moved ${r12(size)} the predicted way` } : { status: "falsified", note: `moved ${r12(size)}, short of the minimum ${h.min_effect}` };
+    }
+    case "ratio": {
+      if (!fin(h.threshold) || !cmpOf(h.direction)) return { status: "incomplete" };
+      if ((w = need(["num", "den"]))) return w;
+      if (m.den === 0) return { status: "not-evaluable", note: "the denominator is zero, so the ratio is undefined" };
+      const r = r12(m.num / m.den);
+      const neg = m.num < 0 || m.den < 0 ? "; a quantity is negative, so check its sign before reading this ratio" : "";
+      return { status: cmpOf(h.direction)(r, h.threshold) ? "supported" : "falsified", note: `ratio ${r}${neg}` };
+    }
+    case "ranking": {
+      if (!fin(h.min_gap) || h.min_gap < 0) return { status: "incomplete" };
+      if ((w = need(["a", "b"]))) return w;
+      const gap = r12(m.a - m.b);
+      return { status: m.a > m.b && gap >= h.min_gap ? "supported" : "falsified", note: `gap ${gap}` };
+    }
+    default: return { status: "incomplete" };
+  }
+}
+function verdictFor(h, m, firedIds){
+  if (firedIds && firedIds.length) return { status: "not-evaluable", note: `${firedIds.join(", ")} fired` };
+  return judge(h, m);
+}
+
+/* kill conditions */
+function parseCovers(s){
+  if (Array.isArray(s)) return s.length ? s.map(x => str(x).trim()).filter(Boolean) : ["all"];
+  const t = str(s).trim();
+  if (!t || /^all$/i.test(t)) return ["all"];
+  const ids = t.split(/[,;\s]+/).map(x => x.trim()).filter(Boolean);
+  return ids.some(x => /^all$/i.test(x)) ? ["all"] : ids;
+}
+function normKills(v){
+  if (Array.isArray(v)) return v.filter(k => k && typeof k === "object").map((k, i) => ({ id: str(k.id) || "K" + (i + 1), text: str(k.text), covers: parseCovers(k.covers) }));
+  if (typeof v === "string" && v.trim()) return [{ id: "K1", text: v.trim(), covers: ["all"] }];
+  return [];
+}
+const killCovers = (k, hid) => k.covers.includes("all") || k.covers.includes(hid);
+
+/* =====================================================================
+   3. Registration: built from raw form values, validated, hashed
+   ===================================================================== */
+const TEXT_FIELDS = ["title", "question", "design", "sample_size", "sample_unit", "draw_rule", "measures", "analysis_plan", "reporting", "verifier"];
+const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/;
+
+function regFromRaw(raw){
+  raw = raw || {};
+  const s = k => str(raw[k]).trim();
+  let kills = Array.isArray(raw.kill) ? raw.kill : (typeof raw.kill_conditions === "string" && raw.kill_conditions.trim() ? [{ text: raw.kill_conditions, covers: "all" }] : []);
+  kills = kills.filter(k => k && str(k.text).trim());
+  return nfcDeep({
+    format: FORMAT,
+    title: s("title"), slug: slugify(s("title")),
+    question: s("question"), design: s("design"),
+    sample: { size: s("sample_size"), unit: s("sample_unit"), draw_rule: s("draw_rule") },
+    measures: s("measures"),
+    hypotheses: (Array.isArray(raw.hypotheses) ? raw.hypotheses : []).filter(h => h && typeof h === "object").map(h => rawToStored(hypToRaw(h), true)),
+    kill_conditions: kills.map((k, i) => ({ id: "K" + (i + 1), text: str(k.text).trim(), covers: parseCovers(k.covers) })),
+    analysis_plan: s("analysis_plan"), reporting: s("reporting"), verifier: s("verifier")
+  });
+}
+
+function validateHyps(hyps, takenIds){
+  const e = [], seen = new Set(takenIds || []);
+  hyps.forEach((h, i) => {
+    const id = h.id || `row ${i + 1}`;
+    if (!h.id) e.push(`Row ${i + 1}: give the hypothesis an id.`);
+    else if (!ID_RE.test(h.id)) e.push(`${id}: ids use letters, digits, dot, dash or underscore, up to 32 characters.`);
+    if (h.id && seen.has(h.id)) e.push(`${id}: that id is already registered. Each hypothesis needs its own.`);
+    seen.add(h.id);
+    if (!h.prediction) e.push(`${id}: write the prediction.`);
+    for (const k of NUMERIC) if (k in h && Number.isNaN(h[k])) e.push(`${id}: ${k.replace("_", " ")} is not a number. Write it as a decimal such as 0.8, or a fraction such as 1/3.`);
+    switch (h.type){
+      case "threshold":
+        if (!h.measure) e.push(`${id}: name the measured quantity.`);
+        if (h.threshold === null) e.push(`${id}: set the threshold.`);
+        if ((h.band_low === null) !== (h.band_high === null)) e.push(`${id}: give both band ends or neither.`);
+        if (fin(h.band_low) && fin(h.band_high) && h.band_low > h.band_high) e.push(`${id}: the band's low end is above its high end.`);
+        break;
+      case "band":
+        if (!h.measure) e.push(`${id}: name the measured quantity.`);
+        if (h.band_low === null || h.band_high === null) e.push(`${id}: a band needs both ends.`);
+        if (fin(h.band_low) && fin(h.band_high) && h.band_low > h.band_high) e.push(`${id}: the band's low end is above its high end.`);
+        break;
+      case "direction":
+        if (!h.measure) e.push(`${id}: name the effect being measured.`);
+        if (h.min_effect === null) e.push(`${id}: set the minimum effect. Use 0 if any movement the predicted way counts.`);
+        if (fin(h.min_effect) && h.min_effect < 0) e.push(`${id}: the minimum effect is a size, so it cannot be negative.`);
+        break;
+      case "ratio":
+        if (!h.numerator || !h.denominator) e.push(`${id}: name both quantities in the ratio.`);
+        if (h.threshold === null) e.push(`${id}: set the bound for the ratio.`);
+        break;
+      case "ranking":
+        if (!h.a || !h.b) e.push(`${id}: name both things being ranked.`);
+        if (h.a && h.a === h.b) e.push(`${id}: a ranking needs two different things.`);
+        if (h.min_gap === null) e.push(`${id}: set the minimum gap. Use 0 for strictly above.`);
+        if (fin(h.min_gap) && h.min_gap < 0) e.push(`${id}: the minimum gap cannot be negative.`);
+        break;
+    }
+  });
+  return e;
+}
+function validate(reg){
+  const e = [];
+  if (!reg.title) e.push("Give it a title.");
+  if (!reg.question) e.push("Write the question.");
+  if (!reg.hypotheses.length) e.push("Register at least one hypothesis.");
+  e.push(...validateHyps(reg.hypotheses));
+  const ids = new Set(reg.hypotheses.map(h => h.id));
+  reg.kill_conditions.forEach(k => {
+    k.covers.forEach(c => { if (c !== "all" && !ids.has(c)) e.push(`${k.id}: it names ${c}, which is not a registered hypothesis.`); });
+  });
+  return e;
+}
+
+async function memberHash(member){ return sha256Hex(canonicalFor(member)); }
+async function makeRegEnvelope(reg, when){
+  const r = nfcDeep(Object.assign({}, reg, { frozen_at_utc: when, clock: CLOCK }));
+  const hash = await memberHash(r);
+  return { format: FORMAT, kind: "registration", hash_algorithm: "SHA-256", canonicalisation: CANON, hashed: "the registration member", registration: r, sha256: hash };
+}
+async function makeAddendum(chainRes, text, newHyps, when){
+  const links = chainRes.links, n = links.length;
+  const add = nfcDeep({
+    format: FORMAT, sequence: n, title: str(links[0].member.title),
+    parent_sha256: links[n - 1].hash, root_sha256: links[0].hash,
+    text: str(text).trim(), new_hypotheses: newHyps,
+    frozen_at_utc: when, clock: CLOCK
+  });
+  const hash = await memberHash(add);
+  return { format: FORMAT, kind: "addendum", hash_algorithm: "SHA-256", canonicalisation: CANON, hashed: "the addendum member, which names its parent's hash", addendum: add, sha256: hash };
+}
+function makeChain(envs){ return { format: FORMAT, kind: "chain", note: "A registration followed by its addenda, in order. Each addendum's hash covers its parent's hash.", links: envs }; }
+const utcNow = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+/* freeze times compared as instants, so offsets such as +05:00 cannot reorder a chain */
+function instant(s){ if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(s)) return null; const t = Date.parse(s); return Number.isFinite(t) ? t : null; }
+
+/* parse a dropped file into links; throws Error with a reader-facing message */
+function checkMember(m, where, listKey){
+  if (!m || typeof m !== "object" || Array.isArray(m)) throw new Error(`${where} is missing or is not an object.`);
+  const list = m[listKey];
+  if (list !== undefined && !Array.isArray(list)) throw new Error(`${where}: "${listKey}" should be a list.`);
+  (list || []).forEach((h, i) => {
+    if (!h || typeof h !== "object" || Array.isArray(h)) throw new Error(`${where}: hypothesis ${i + 1} is not an object.`);
+    if (h.id != null && typeof h.id !== "string") throw new Error(`${where}: hypothesis ${i + 1} has an id that is not text.`);
+    if (h.type != null && !isType(h.type)) throw new Error(`${where}: hypothesis ${i + 1}${typeof h.id === "string" ? " (" + h.id + ")" : ""} has an unrecognised type, ${JSON.stringify(String(h.type)).slice(0, 40)}. The desk knows ${Object.keys(TYPES).join(", ")}, and it will not guess.`);
+  });
+}
+function parseFile(text){
+  if (typeof text !== "string" || !text.trim()) throw new Error("That file is empty.");
+  if (text.length > MAX_FILE) throw new Error("That file is over 20 MB, which is far larger than any registration. The desk refuses it.");
+  let obj;
+  try { obj = JSON.parse(text.replace(/^\uFEFF/, "")); } catch (_) { throw new Error("That file is not valid JSON."); }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) throw new Error("That file holds no registration. Is it a PREREG file from this desk?");
+  if (depthOf(obj) > MAX_DEPTH) throw new Error(`That file is nested more than ${MAX_DEPTH} levels deep. A registration never is, so the desk refuses it.`);
+  let links;
+  if (obj.kind === "chain"){
+    if (!Array.isArray(obj.links) || !obj.links.length) throw new Error("The chain file has no links.");
+    links = obj.links;
+  } else if (obj.registration) links = [obj];
+  else if (obj.addendum) throw new Error("This is an addendum on its own. Drop the chain file (\u2026.chain.json), which carries the registration it amends.");
+  else throw new Error("No registration object in that file. Is it a PREREG file from this desk?");
+  links.forEach((env, i) => {
+    if (!env || typeof env !== "object") throw new Error(`Link ${i + 1} of the chain is not an object.`);
+    if (i === 0) checkMember(env.registration, "The registration", "hypotheses");
+    else checkMember(env.addendum, `Addendum ${i}`, "new_hypotheses");
+  });
+  return links;
+}
+
+async function verifyChain(links){
+  const out = { links: [], ok: true };
+  let prev = null, broken = false;
+  const ids = new Set();
+  for (let i = 0; i < links.length; i++){
+    const env = links[i], isReg = i === 0;
+    const member = isReg ? env.registration : env.addendum;
+    const problems = [], notes = [];
+    const hash = await memberHash(member);
+    const stored = typeof env.sha256 === "string" ? env.sha256.trim().toLowerCase() : null;
+    if (stored !== hash) problems.push(stored ? "its stored hash does not match the recomputed one" : "it carries no stored hash");
+    if (!isReg){
+      if (member.parent_sha256 !== prev.hash) problems.push("it names a different parent hash");
+      if (member.root_sha256 !== out.links[0].hash) problems.push("it names a different registration");
+      if (member.sequence !== i) problems.push(`it says it is addendum ${str(member.sequence)} but sits at position ${i}`);
+      const tc = instant(member.frozen_at_utc), tp = instant(prev.member.frozen_at_utc);
+      if (tc === null) problems.push("its freeze time cannot be read as a date");
+      else if (tp !== null && tc < tp) problems.push("it is dated before its parent");
+    }
+    const hyps = (isReg ? member.hypotheses : member.new_hypotheses) || [];
+    hyps.forEach(h => {
+      if (ids.has(h.id)){ if (isReg) notes.push(`the id ${h.id} appears twice`); else problems.push(`it reuses the registered id ${h.id}, which would redefine a frozen rule`); }
+      ids.add(h.id);
+    });
+    if (broken) problems.push("an earlier link in the chain is broken");
+    const ok = problems.length === 0;
+    if (!ok) broken = true;
+    out.links.push({ i, isReg, member, hash, stored, ok, problems, notes, hyps, label: isReg ? "Registration" : `Addendum A${i}` });
+    prev = out.links[i];
+  }
+  out.ok = !broken;
+  return out;
+}
+
+/* =====================================================================
+   4. Markdown out (house format) and in (best effort)
+   ===================================================================== */
+const cell = s => str(s).replace(/\r?\n+/g, " ").replace(/\|/g, "\\|").trim();
+function hypTable(hyps){
+  const L = ["| id | type | prediction | measured quantity | rule | refuted by |", "|---|---|---|---|---|---|"];
+  hyps.forEach(h => L.push(`| ${cell(h.id)} | ${inferType(h)} | ${cell(h.prediction)} | ${cell(quantityCell(h))} | ${cell(ruleCell(h))} | ${cell(h.refutes)} |`));
+  return L;
+}
+function toMarkdown(reg, hash){
+  const L = [], p = s => (s && String(s).trim()) ? String(s).trim() : "_(blank)_";
+  L.push(`# ${oneLine(reg.title) || "Untitled registration"}`, "");
+  if (reg.frozen_at_utc){
+    L.push(`Frozen ${reg.frozen_at_utc} (${reg.clock}). Changes after this point go in dated addenda.`, "");
+    if (hash) L.push(`SHA-256 of the canonical registration JSON: \`${hash}\``, "", "The hash covers the JSON file, not this markdown copy.", "");
+  } else L.push("Draft. Not frozen.", "");
+  L.push("## 1. Question", "", p(reg.question), "");
+  L.push("## 2. Design", "", p(reg.design), "", "### Sample", "", `Size: ${oneLine(reg.sample.size) || "_(blank)_"}`, `Unit: ${oneLine(reg.sample.unit) || "_(blank)_"}`, "", "### Draw rule", "", p(reg.sample.draw_rule), "");
+  L.push("## 3. Measures", "", p(reg.measures), "");
+  L.push("## 4. Hypotheses, as numbers", "", ...hypTable(reg.hypotheses), "");
+  L.push("## 5. Kill conditions", "");
+  const ks = normKills(reg.kill_conditions);
+  if (ks.length) ks.forEach((k, i) => L.push(`${i + 1}. **${k.id}** (covers ${k.covers.join(", ")}): ${oneLine(k.text)}`)); else L.push("_(none registered)_");
+  L.push("", "## 6. Analysis plan", "", p(reg.analysis_plan), "");
+  L.push("## 7. Reporting", "", p(reg.reporting), "");
+  L.push("## 8. Who verifies", "", p(reg.verifier), "");
+  return L.join("\n");
+}
+function addendumMarkdown(add, hash){
+  const L = [`# Addendum A${add.sequence} to ${oneLine(add.title)}`, "", `Frozen ${add.frozen_at_utc} (${add.clock}).`, "",
+    `SHA-256 of this addendum: \`${hash}\``, `Parent SHA-256: \`${add.parent_sha256}\``, `Registration SHA-256: \`${add.root_sha256}\``, "",
+    "The addendum's hash covers its parent's hash, so the chain cannot be reordered or edited without breaking it. The parent's rules are unchanged.", "",
+    "## What changes, and why", "", str(add.text).trim() || "_(blank)_", ""];
+  if (add.new_hypotheses.length) L.push("## New hypotheses", "", ...hypTable(add.new_hypotheses), "");
+  return L.join("\n");
+}
+
+const SECTION_RULES = [["addendum", /^addendum/i], ["hypotheses", /hypothes|prediction/i], ["kill", /kill|stop(ping)? condition|stop rule/i],
+  ["question", /question/i], ["sample", /^sample|draw rule/i], ["design", /design/i], ["measures", /measure/i], ["analysis", /analys/i], ["reporting", /report/i], ["verifier", /verif/i]];
+const NUM_TXT = "[-+\u2212]?(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?(?:e[-+]?\\d+)?\\s?%?|[-+\u2212]?\\.\\d+";
+function readNum(s){
+  if (s == null) return { v: "" };
+  let t = String(s).trim().replace(/\u2212/g, "-");
+  if (/^\(?not set\)?$|^\?$|^_?\(blank\)_?$|^[\u2014-]$/.test(t) || t === "") return { v: "" };
+  let pct = false;
+  if (/%$/.test(t)){ pct = true; t = t.replace(/\s?%$/, ""); }
+  if (/^[-+]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) t = t.replace(/,/g, "");
+  if (pct){ const n = Number(t); return Number.isFinite(n) ? { v: String(r12(n / 100)), note: `read ${s.trim()} as ${r12(n / 100)}` } : { v: t }; }
+  return { v: t };
+}
+function splitRow(line){
+  let t = line.trim();
+  if (t.startsWith("|")) t = t.slice(1);
+  if (t.endsWith("|") && !t.endsWith("\\|")) t = t.slice(0, -1);
+  return t.split(/(?<!\\)\|/).map(c => c.replace(/\\\|/g, "|").replace(/\*\*|`/g, "").trim());
+}
+function findTables(lines){
+  const tables = [];
+  for (let i = 0; i < lines.length - 1; i++){
+    if (/^\s*\|/.test(lines[i]) && /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(lines[i + 1])){
+      const header = splitRow(lines[i]).map(h => h.toLowerCase()), rows = [];
+      let j = i + 2;
+      while (j < lines.length && /^\s*\|/.test(lines[j])){ rows.push(splitRow(lines[j])); j++; }
+      tables.push({ header, rows }); i = j - 1;
+    }
+  }
+  return tables;
+}
+function collectItems(lines){
+  const items = []; let cur = null;
+  for (const line of lines){
+    let m;
+    if ((m = /^\s*(?:[-*+]|\d+[.)])\s+(.*)$/.exec(line)) || (m = /^(\*\*.+)$/.exec(line))){ cur = [m[1]]; items.push(cur); continue; }
+    if (!line.trim() || /^\s*\|/.test(line) || /^#{1,6}\s/.test(line) || /^-{3,}\s*$/.test(line)){ cur = null; continue; }
+    if (cur) cur.push(line.trim());
+  }
+  return items.map(a => a.join(" ").replace(/\s+/g, " ").trim());
+}
+const DIR_WORD = s => {
+  const t = str(s).trim().toLowerCase();
+  if (/^(min|minimum|\u2265|>=|at least)$/.test(t)) return ">=";
+  if (/^(max|maximum|\u2264|<=|at most)$/.test(t)) return "<=";
+  if (/^(>|above)$/.test(t)) return ">";
+  if (/^(<|below)$/.test(t)) return "<";
+  return "";
+};
+/* free-text rule: earliest comparator wins; a band phrase alone makes a band row */
+function parseRuleText(text){
+  const t = str(text).replace(/\u2212/g, "-");
+  const N = `(${NUM_TXT})`, notes = [];
+  const comps = [
+    [new RegExp(`(?:at least|no less than|minimum of|\u2265|>=)\\s*${N}`, "i"), ">="],
+    [new RegExp(`(?:at most|no more than|maximum of|\u2264|<=)\\s*${N}`, "i"), "<="],
+    [new RegExp(`(?:above|more than|greater than|exceeds?)\\s+${N}|(?<![<\\-=])>\\s*${N}`, "i"), ">"],
+    [new RegExp(`(?:below|less than|under)\\s+${N}|<(?!=)\\s*${N}`, "i"), "<"]
+  ];
+  const bandRes = [new RegExp(`band\\s+${N}\\s*(?:to|\u2013|and|-)\\s*${N}`, "i"), new RegExp(`between\\s+${N}\\s+and\\s+${N}`, "i"), new RegExp(`\\[\\s*${N}\\s*,\\s*${N}\\s*\\]`)];
+  let band = null;
+  for (const re of bandRes){ const m = re.exec(t); if (m){ band = [readNum(m[1]), readNum(m[2])]; break; } }
+  let best = null;
+  for (const [re, dir] of comps){ const m = re.exec(t); if (m && (!best || m.index < best.index)) best = { index: m.index, dir, n: readNum(m[1] || m[2]) }; }
+  const bandFirst = /supported if (?:it is )?within|within the band|^\s*between/i.test(t);
+  const raw = Object.assign({}, RAW_DEFAULT);
+  if (band) [band[0], band[1]].forEach(b => b.note && notes.push(b.note));
+  if (best && !(bandFirst && band)){
+    raw.type = "threshold"; raw.t_dir = best.dir; raw.t_value = best.n.v; if (best.n.note) notes.push(best.n.note);
+    if (band){ raw.t_lo = band[0].v; raw.t_hi = band[1].v; }
+  } else if (band){ raw.type = "band"; raw.b_lo = band[0].v; raw.b_hi = band[1].v; }
+  else notes.push("no rule recognised; set it by hand");
+  return { raw, notes };
+}
+function hypFromStructured(type, q, rule){
+  const raw = Object.assign({}, RAW_DEFAULT, { type }), N = `(${NUM_TXT}|\\(not set\\))`;
+  const op = "(\u2265|>=|>|\u2264|<=|<)", toOp = s => ({ "\u2265": ">=", "\u2264": "<=" }[s] || s);
+  let m;
+  switch (type){
+    case "threshold":
+      raw.t_measure = q;
+      if ((m = new RegExp(`^${op}\\s*${N}(?:\\s*\\(band\\s+${N}\\s+to\\s+${N}\\))?$`).exec(rule))){ raw.t_dir = toOp(m[1]); raw.t_value = readNum(m[2]).v; raw.t_lo = readNum(m[3]).v; raw.t_hi = readNum(m[4]).v; return raw; }
+      break;
+    case "band":
+      raw.b_measure = q;
+      if ((m = new RegExp(`^between\\s+${N}\\s+and\\s+${N}$`).exec(rule))){ raw.b_lo = readNum(m[1]).v; raw.b_hi = readNum(m[2]).v; return raw; }
+      break;
+    case "direction":
+      raw.d_measure = q;
+      if ((m = new RegExp(`^(increase|decrease)\\s+of\\s+at\\s+least\\s+${N}$`).exec(rule))){ raw.d_dir = m[1]; raw.d_min = readNum(m[2]).v; return raw; }
+      break;
+    case "ratio": {
+      const parts = q.split(" \u00f7 "); raw.r_num = parts[0] || ""; raw.r_den = parts.slice(1).join(" \u00f7 ");
+      if ((m = new RegExp(`^${op}\\s*${N}$`).exec(rule))){ raw.r_dir = toOp(m[1]); raw.r_value = readNum(m[2]).v; return raw; }
+      break;
+    }
+    case "ranking": {
+      const parts = q.split(" vs "); raw.k_a = parts[0] || ""; raw.k_b = parts.slice(1).join(" vs ");
+      if ((m = new RegExp(`^first above second by at least\\s+${N}$`).exec(rule))){ raw.k_gap = readNum(m[1]).v; return raw; }
+      break;
+    }
+  }
+  return null;
+}
+function parseMarkdown(md){
+  const text = str(md).replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").normalize("NFC");
+  const lines = text.split("\n");
+  let title = ""; const secs = []; let cur = null;
+  for (const line of lines){
+    let m;
+    if (!title && !secs.length && (m = /^#\s+(.+?)\s*#*\s*$/.exec(line))){ title = m[1].trim(); continue; }
+    if ((m = /^##\s+(.+?)\s*#*\s*$/.exec(line))){ cur = { heading: m[1].trim(), lines: [] }; secs.push(cur); continue; }
+    if (cur) cur.lines.push(line);
+  }
+  const res = { fields: { title }, hypotheses: [], kill: [], notes: [], unused: [], matched: {} };
+  const body = ls => ls.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  const addenda = secs.filter(s => /^addendum/i.test(s.heading)).length;
+  if (addenda) res.notes.push(`${addenda} addendum section${addenda > 1 ? "s" : ""} found. The import reads the base registration only; add amendments on the Amend tab after you freeze.`);
+  let hypSec = null, killSec = null;
+  for (const s of secs){
+    const h = s.heading.replace(/^(\d+[a-z]?|[A-Z])[.):]?\s+/, "");
+    const rule = SECTION_RULES.find(([, re]) => re.test(h));
+    if (!rule || rule[0] === "addendum"){ if (!rule) res.unused.push(s.heading); continue; }
+    const key = rule[0];
+    if (res.matched[key]){ res.unused.push(s.heading); continue; }
+    res.matched[key] = s.heading;
+    if (key === "hypotheses"){ hypSec = s; continue; }
+    if (key === "kill"){ killSec = s; continue; }
+    if (key === "design" || key === "sample"){
+      const parts = [{ name: key, lines: [] }];
+      s.lines.forEach(l => { const m = /^###\s+(.+)/.exec(l); if (m) parts.push({ name: m[1].toLowerCase(), lines: [] }); else parts[parts.length - 1].lines.push(l); });
+      parts.forEach(pt => {
+        if (/draw/.test(pt.name)) { res.fields.draw_rule = body(pt.lines); return; }
+        const rest = [];
+        pt.lines.forEach(l => {
+          let m;
+          if ((m = /^\s*(?:[-*]\s*)?(?:sample\s+)?size\s*:\s*(.+)$/i.exec(l))) res.fields.sample_size = m[1].replace(/^_\(blank\)_$/, "").trim();
+          else if ((m = /^\s*(?:[-*]\s*)?unit\s*:\s*(.+)$/i.exec(l))) res.fields.sample_unit = m[1].replace(/^_\(blank\)_$/, "").trim();
+          else if ((m = /^\s*(?:[-*]\s*)?draw rule\s*:\s*(.+)$/i.exec(l))) res.fields.draw_rule = m[1].trim();
+          else rest.push(l);
+        });
+        const b = body(rest);
+        if (!b || b === "_(blank)_") return;
+        if (pt.name === "design") res.fields.design = b;
+        else if (pt.name === "sample") res.fields.draw_rule = res.fields.draw_rule ? res.fields.draw_rule + "\n\n" + b : b;
+        else res.fields.design = (res.fields.design ? res.fields.design + "\n\n" : "") + `${pt.name}: ${b}`;
+      });
+      continue;
+    }
+    const map = { question: "question", measures: "measures", analysis: "analysis_plan", reporting: "reporting", verifier: "verifier" };
+    const b = body(s.lines);
+    res.fields[map[key]] = b === "_(blank)_" ? "" : b;
+  }
+  if (hypSec) res.hypotheses = parseHypSection(hypSec.lines);
+  else res.notes.push("No hypotheses section found. The reader looks for a heading with \"Hypotheses\" or \"Predictions\" in it.");
+  if (killSec) res.kill = parseKillSection(killSec.lines, res.hypotheses.map(h => h.raw.id));
+  return res;
+}
+function parseHypSection(lines){
+  const out = [];
+  for (const t of findTables(lines)){
+    const col = re => t.header.findIndex(h => re.test(h));
+    const c = { id: col(/^(id|#|no\.?|hyp(othesis)? id)$/), type: col(/^type$/), pred: col(/predict|claim|hypothes|statement|descri/), q: col(/quantit|measure|metric/),
+      dir: col(/^dir/), rule: col(/rule|threshold|bar|criterion|supported/), band: col(/band|range/), ref: col(/refut|falsif/) };
+    if (c.id < 0 && c.pred < 0 && c.rule < 0) continue;
+    t.rows.forEach((row, ri) => {
+      const g = k => c[k] >= 0 ? str(row[c[k]]).trim() : "";
+      let id = g("id"), notes = [], raw = null;
+      if (!id){ id = "H" + (out.length + 1); notes.push(`no id in the row, named it ${id}`); }
+      const type = g("type").toLowerCase();
+      if (isType(type)) raw = hypFromStructured(type, g("q"), g("rule"));
+      if (!raw){
+        const dir = DIR_WORD(g("dir"));
+        const thr = readNum(g("rule"));
+        if (dir && thr.v && num(thr.v) !== null && !Number.isNaN(num(thr.v))){
+          raw = Object.assign({}, RAW_DEFAULT, { type: "threshold", t_measure: g("q"), t_dir: dir, t_value: thr.v });
+          if (thr.note) notes.push(thr.note);
+        } else {
+          const pr = parseRuleText([g("dir"), g("rule"), g("band") && "band " + g("band")].filter(Boolean).join(" ") || g("pred"));
+          raw = pr.raw; notes.push(...pr.notes);
+          if (raw.type === "threshold") raw.t_measure = g("q"); else raw.b_measure = g("q");
+        }
+        notes.push("read from free text; check the rule");
+        if (!g("q")) notes.push("no measured quantity in the row");
+      }
+      raw.id = id.replace(/[^A-Za-z0-9._-]/g, "").slice(0, 32) || "H" + (out.length + 1);
+      raw.prediction = g("pred") || (c.pred < 0 ? row.filter((_, i) => i !== c.id).join(" \u00b7 ") : "");
+      raw.refutes = g("ref");
+      out.push({ raw, notes, source: "table row " + (ri + 1) });
+    });
+  }
+  if (out.length) return out;
+  collectItems(lines).forEach(item => {
+    const bm = /^\*\*(.+?)\*\*\s*(.*)$/.exec(item);
+    const label = bm ? bm[1] : item;
+    const idm = /^([A-Za-z]{1,5}-?\d+[a-z]?)\b/.exec(label.trim());
+    if (!idm) return;
+    const id = idm[1];
+    const labelRest = label.slice(idm[0].length).replace(/^[\s(\u2014\u2013:.-]+|[\s).:\u2014\u2013-]+$/g, "").trim();
+    const rest = (bm ? bm[2] : label.slice(idm[0].length)).replace(/\*\*|\*/g, "").trim();
+    const pr = parseRuleText(rest);
+    const raw = pr.raw;
+    raw.id = id; raw.prediction = (labelRest ? labelRest + ". " : "") + rest;
+    const rf = /(?:refuted|falsified)\s+(?:if|by|at|when)\s+([^.]+\.)/i.exec(rest);
+    raw.refutes = rf ? rf[1].trim() : "";
+    out.push({ raw, notes: ["read from prose; check the rule and name the measured quantity", ...pr.notes], source: "bullet " + id });
+  });
+  return out;
+}
+function parseKillSection(lines, hypIds){
+  const out = [], idset = new Set(hypIds);
+  const mentioned = t => hypIds.filter(id => new RegExp(`(^|[^A-Za-z0-9])${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^A-Za-z0-9]|$)`).test(t));
+  const tables = findTables(lines);
+  const items = tables.length ? tables.flatMap(t => t.rows.map(r => r.filter(Boolean).join(" \u00b7 "))) : collectItems(lines);
+  items.forEach(t => {
+    const m = /^\*\*(K\d+)\*\*\s*\(covers ([^)]*)\):\s*(.*)$/.exec(t);
+    if (m){ out.push({ text: m[3], covers: parseCovers(m[2]).filter(c => c === "all" || idset.has(c)).join(", ") || "all", notes: [] }); return; }
+    const txt = t.replace(/\*\*|\*/g, "").trim(), ids = mentioned(txt);
+    out.push({ text: txt, covers: ids.length ? ids.join(", ") : "all", notes: [ids.length ? "covers read from the ids it mentions" : "names no hypothesis, so it covers all"] });
+  });
+  if (!items.length){
+    const b = lines.join("\n").trim();
+    if (b && b !== "_(none registered)_") out.push({ text: b.replace(/\s+/g, " "), covers: "all", notes: ["one block of prose, kept as one condition"] });
+  }
+  return out;
+}
+
+/* =====================================================================
+   5. Witness text
+   ===================================================================== */
+function witnessLine(o){
+  const t = oneLine(o.title, 140) || "Untitled";
+  if (o.kind === "addendum") return `PREREG addendum A${o.seq} | ${t} | sha256:${o.hash} | parent sha256:${o.parent} | frozen ${o.time} (UTC, browser clock)`;
+  return `PREREG | ${t} | sha256:${o.hash} | frozen ${o.time} (UTC, browser clock)`;
+}
+const gitCommand = line => `git commit --allow-empty -m '${line.replace(/'/g, "'\\''")}'`;
+
+/* =====================================================================
+   6. Worked examples, from the public campaign pages only
+   ===================================================================== */
+const EXAMPLE = {
+  title: "PREREG-TRIAL-BALANCE: can an auditor find skipped steps by reading only where two books fail to balance?",
+  question: "An agent's log records what it did. It has no line for a step it skipped, so a reviewer finds the gap only by knowing the procedure and checking each step against it. If the layer that hands out the work writes down what the agent owes, and the harness writes down what the agent actually ran, can an auditor find skipped steps by reading only where the two books fail to balance, and do it for a fraction of what reading the log costs?",
+  design: "A procurement workflow with seven steps runs at seven lengths, from one requisition to sixteen. Five conditions are injected into each diary: no fault, a skipped step, a skipped step with a line claiming it was done, a wrong amount, and a wrong amount carried on both sides of the book. Four auditors read each diary under seven reading budgets from 200 to 12,800 tokens. Log review reads the diary from the top. Imbalance-first reads the trial-balance report and then only the requisition that failed to balance. A random sample of the same size separates reading less from reading the right thing. The checklist reader gets the same diary as log review plus the instruction to mark every owed step present or absent.",
+  sample_size: "18,360",
+  sample_unit: "audits, including 3,240 on diaries written by a different model running the workflow for real",
+  draw_rule: "Every diary length from one requisition to sixteen in the seven-length grid, each with all five injected conditions, read by all four auditors at all seven budgets. One fault per diary.",
+  measures: "Omission detection per auditor, diary length and reading budget. Reading cost in prompt tokens. The reading cost at which each auditor first reaches 0.80 omission detection. Detection of each injected condition, including the wrong amount carried on both sides. Accusations made against diaries with no fault.",
+  hypotheses: [
+    { id: "TB1", type: "threshold", prediction: "Imbalance-first audit reaches 0.80 omission detection at 8 requisitions.", measure: "omission detection, imbalance-first, 8 requisitions", direction: ">=", threshold: "0.80", refutes: "Below 0.80 at 8 requisitions." },
+    { id: "TB2", type: "threshold", prediction: "Imbalance-first audit reaches 0.80 omission detection at 12 requisitions.", measure: "omission detection, imbalance-first, 12 requisitions", direction: ">=", threshold: "0.80", refutes: "Below 0.80 at 12 requisitions." },
+    { id: "TB3", type: "threshold", prediction: "Imbalance-first audit reaches 0.80 omission detection at 16 requisitions.", measure: "omission detection, imbalance-first, 16 requisitions", direction: ">=", threshold: "0.80", refutes: "Below 0.80 at 16 requisitions." },
+    { id: "TB4", type: "ratio", prediction: "Imbalance-first gets to 0.80 at a third of log review's reading cost or less, at 8, 12 and 16 requisitions. Enter the costs at the length where the ratio is largest.", numerator: "imbalance-first reading cost to reach 0.80, prompt tokens", denominator: "log review reading cost to reach 0.80, prompt tokens", direction: "<=", threshold: "1/3", refutes: "A ratio above one third at any of the three lengths." },
+    { id: "TB5", type: "threshold", prediction: "A balanced book hides a wrong amount carried on both sides. The page states this in words without a number, so the threshold is blank and the desk will not freeze the row until you set one.", measure: "imbalance-first detection of a wrong amount carried on both sides", direction: "<=", threshold: "", refutes: "The balance check finds these amounts." },
+    { id: "TB6", type: "direction", prediction: "A log reader misses a skipped step far more often when the agent writes a line claiming it was done. The page says \"far more often\" without a number, so the minimum effect is blank and the desk will not freeze the row until you set one.", measure: "log review miss rate, claimed skip minus plain skip", direction: "increase", min_effect: "", refutes: "The claiming line makes no difference to the miss rate." }
+  ],
+  kill: [{ text: "The run halts at its calibration gate if the instrument fails. The gate tests only whether the instrument works, and never requires the reading the campaign exists to measure.", covers: "all" }],
+  analysis_plan: "Omission detection by auditor, length and budget, read against the 0.80 bar and against log review's reading cost at the same bar.",
+  reporting: "Each prediction marked as registered, next to the measured value, with the limits stated.",
+  verifier: "An independent rescoring from the raw ledgers."
+};
+const EXAMPLE_DC = {
+  title: "PREREG-DELEGATION-CLIFF: where does delegation stop paying, and which design choices buy the margin back?",
+  question: "Every organisation deploying AI agents is betting that pushing work further from human review is cheaper than keeping it close. This campaign priced that bet: where does delegation stop paying, and which design choices buy the margin back?",
+  design: "A simulated agent organisation with twelve design dimensions, including delegation depth, reviewer capacity, task coupling, model capability and self-check calibration. Each configuration is scored on the margin between the quality the organisation delivers and the floor it must hold.",
+  sample_size: "90,880",
+  sample_unit: "configurations",
+  draw_rule: "The page names an 8,192-unit Sobol set and a 256-unit calibration sweep. It does not give the full draw rule, so write it here before freezing.",
+  measures: "The margin between delivered quality and the quality floor, per configuration, at floors of 0.95 and 0.99. Descriptive slopes of the margin on each design dimension inside the transition band.",
+  hypotheses: [
+    { id: "DC1", type: "threshold", prediction: "The design space has a cliff, a sharp boundary between robust and fragile configurations. The page registers this in words, so the threshold is blank.", measure: "share of the design space on the fragile side of a sharp boundary", direction: ">=", threshold: "", refutes: "A broad transition band with no sharp boundary." },
+    { id: "DC2", type: "ranking", prediction: "Better observability outranks raw reviewer capacity. \"Outranks\" registers no margin, so the gap is 0 and observability has to sit strictly above.", a: "weight of observability on the margin", b: "weight of reviewer capacity on the margin", min_gap: "0", refutes: "Reviewer capacity weighs as much as observability, or more." },
+    { id: "DC3", type: "direction", prediction: "The prediction as registered; the published result refuted it. An audit death spiral: eroding trust raises audit load until capacity saturates and quality falls. Written as a direction, mean margin falls as trust response rises. The page registers no minimum effect, so it is blank. The campaign page reports that mean margin rises across trust-response quintiles.", measure: "change in mean margin from the lowest to the highest trust-response quintile", direction: "decrease", min_effect: "", refutes: "Mean margin holds or rises across trust-response quintiles." },
+    { id: "DC4", type: "band", prediction: "A rerun of 200 random configurations from scratch lands within the 0.05 tolerance of the original scores. The page reports this revalidation certificate with its tolerance; writing it as a two-sided band is the desk's framing.", measure: "median difference between the rerun and the original, as the page reports it", band_low: "-0.05", band_high: "0.05", refutes: "A median difference outside the tolerance." }
+  ],
+  kill: [],
+  analysis_plan: "Descriptive slopes of the margin on each dimension inside the transition band, read at the 0.95 and 0.99 floors.",
+  reporting: "Each registered prediction marked against its result, with the limits stated.",
+  verifier: "A revalidation certificate that reruns 200 random configurations from scratch."
+};
+const SRC_TB = "Trial Balance campaign page, dinand.com/research";
+const SRC_DC = "Delegation Cliff campaign page, dinand.com/research";
+const EXAMPLE_TYPES = [
+  ["threshold", "TB1: omission detection, imbalance-first, 8 requisitions \u2265 0.80", "Imbalance-first sat between 0.92 and 1.00 in every cell.", SRC_TB + ", registered and found"],
+  ["band", "DC4: median rerun difference between \u22120.05 and 0.05", "Median difference 0.002, 95th percentile 0.0117, against a tolerance of 0.05.", SRC_DC + ", measured"],
+  ["direction", "DC3: mean margin falls as trust response rises (minimum effect blank). The prediction as registered; the published result refuted it. Also TB6.", "Mean margin rises across trust-response quintiles. A move the wrong way falsifies the row whatever minimum is set.", SRC_DC + ", registered and found"],
+  ["ratio", "TB4: imbalance-first cost \u00f7 log review cost to reach 0.80 \u2264 1/3", "The registered cost ratio is unbounded because log review never reached the bar, so there is no log-review cost to enter. The desk leaves the row waiting for a denominator, and it marks a zero denominator not evaluable.", SRC_TB + ", limits"],
+  ["ranking", "DC2: observability strictly above reviewer capacity", "The observability prediction failed: observability complements reviewer capacity and does not replace it.", SRC_DC + ", found"]
+];
+
+/* =====================================================================
+   7. DOM
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const form = $("#reg"), hypsEl = $("#hyps"), killsEl = $("#kills"), preview = $("#preview");
+let view = "json", lastFrozen = null, saveTimer = null;
+const DRAFT_KEY = "prereg-desk:draft:v2", DRAFT_KEY_V1 = "prereg-desk:draft:v1";
+/* a stored draft is used only if it parses to a plain object; anything else is moved aside, never overwritten */
+function classifyDraft(raw){
+  if (raw == null || raw === "") return { ok: false, reason: "it was empty" };
+  let d;
+  try { d = JSON.parse(raw); } catch (_){ return { ok: false, reason: "it is not valid JSON" }; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return { ok: false, reason: "it is not an object" };
+  return { ok: true, draft: d };
+}
+function setAsideDraft(st, key, raw, reason){
+  const aside = `${DRAFT_KEY}:set-aside:${utcNow()}`;
+  const saved = st.set(aside, String(raw == null ? "" : raw)) === "ok";
+  if (saved) st.clear(key);
+  return saved ? `The saved draft could not be read (${reason}). It is kept in this browser under ${aside}, and the form starts empty.`
+    : `The saved draft could not be read (${reason}) and could not be moved aside, so it stays under ${key}. Autosave is off until you clear the draft.`;
+}
+let autosaveBlocked = false;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch (_) { return null; } },
+  set(k, v){
+    try { localStorage.setItem(k, v); return "ok"; }
+    catch (e){ return (e && (e.name === "QuotaExceededError" || e.code === 22)) ? "quota" : "blocked"; }
+  },
+  clear(k){ try { localStorage.removeItem(k); return true; } catch (_) { return false; } }
+};
+function el(tag, attrs, ...kids){
+  const n = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)){ if (v == null || v === false) continue; if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else n.setAttribute(k, v === true ? "" : v); }
+  kids.flat().forEach(k => { if (k != null && k !== false) n.append(k instanceof Node ? k : document.createTextNode(String(k))); });
+  return n;
+}
+function showErrors(node, list){ node.replaceChildren(...list.map(e => el("div", { text: e }))); }
+
+/* ----- hypothesis editor ----- */
+function hypBlock(h){
+  const raw = hypToRaw(h);
+  const d = el("fieldset", { class: "hyp" });
+  const typeOpts = Object.entries(TYPES).map(([k, t]) => `<option value="${k}">${esc(t.label)}</option>`).join("");
+  const cmpOpts = `<option value=">=">at least (\u2265)</option><option value=">">above (&gt;)</option><option value="<=">at most (\u2264)</option><option value="<">below (&lt;)</option>`;
+  d.innerHTML = `
+    <legend class="hid"></legend><button type="button" class="act quiet rm">Remove</button>
+    <div class="row"><div class="field"><label>Type</label><select data-k="type">${typeOpts}</select></div><div class="field"><label>Id <span class="hint">kept as typed</span></label><input type="text" data-k="id" spellcheck="false" style="font-family:var(--mono)"></div></div>
+    <p class="typehelp"></p>
+    <div class="field"><label>Prediction</label><textarea data-k="prediction" rows="2"></textarea></div>
+    <div data-group="threshold">
+      <div class="row3"><div class="field wide"><label>Measured quantity</label><input type="text" data-k="t_measure" placeholder="omission detection, arm A"></div>
+      <div class="field"><label>Direction</label><select data-k="t_dir">${cmpOpts}</select></div>
+      <div class="field"><label>Threshold</label><input type="text" inputmode="decimal" data-k="t_value" placeholder="a number"></div></div>
+      <div class="row"><div class="field"><label>Predicted band, low <span class="hint">optional</span></label><input type="text" inputmode="decimal" data-k="t_lo"></div>
+      <div class="field"><label>Predicted band, high <span class="hint">optional</span></label><input type="text" inputmode="decimal" data-k="t_hi"></div></div>
+    </div>
+    <div data-group="band">
+      <div class="field"><label>Measured quantity</label><input type="text" data-k="b_measure"></div>
+      <div class="row"><div class="field"><label>Low end, a</label><input type="text" inputmode="decimal" data-k="b_lo"></div>
+      <div class="field"><label>High end, b</label><input type="text" inputmode="decimal" data-k="b_hi"></div></div>
+    </div>
+    <div data-group="direction">
+      <div class="field"><label>Effect measured <span class="hint">signed, such as arm minus control</span></label><input type="text" data-k="d_measure"></div>
+      <div class="row"><div class="field"><label>Predicted direction</label><select data-k="d_dir"><option value="increase">rises</option><option value="decrease">falls</option></select></div>
+      <div class="field"><label>Minimum effect <span class="hint">a size, 0 or more</span></label><input type="text" inputmode="decimal" data-k="d_min"></div></div>
+    </div>
+    <div data-group="ratio">
+      <div class="row"><div class="field"><label>Numerator</label><input type="text" data-k="r_num"></div>
+      <div class="field"><label>Denominator</label><input type="text" data-k="r_den"></div></div>
+      <div class="row"><div class="field"><label>Ratio must be</label><select data-k="r_dir">${cmpOpts}</select></div>
+      <div class="field"><label>Bound <span class="hint">decimal or fraction, such as 1/3</span></label><input type="text" inputmode="decimal" data-k="r_value"></div></div>
+    </div>
+    <div data-group="ranking">
+      <div class="row"><div class="field"><label>A, predicted above</label><input type="text" data-k="k_a"></div>
+      <div class="field"><label>B</label><input type="text" data-k="k_b"></div></div>
+      <div class="field"><label>Minimum gap, d <span class="hint">0 means strictly above</span></label><input type="text" inputmode="decimal" data-k="k_gap"></div>
+    </div>
+    <div class="field"><label>What refutes it</label><textarea data-k="refutes" rows="2"></textarea></div>`;
+  d.querySelectorAll("[data-k]").forEach(x => { x.value = raw[x.dataset.k] != null ? raw[x.dataset.k] : ""; });
+  if (!isType(d.querySelector('[data-k="type"]').value)) d.querySelector('[data-k="type"]').value = "threshold";
+  d.dataset.auto = raw.id ? "" : "1";
+  showGroup(d);
+  d.querySelector('[data-k="type"]').addEventListener("change", () => showGroup(d));
+  d.querySelector('[data-k="id"]').addEventListener("input", () => { d.dataset.auto = ""; });
+  return d;
+}
+function showGroup(d){
+  const t = d.querySelector('[data-k="type"]').value;
+  d.querySelectorAll("[data-group]").forEach(g => { g.hidden = g.dataset.group !== t; });
+  d.querySelector(".typehelp").textContent = isType(t) ? TYPES[t].help : "";
+}
+function renumberHyps(container, prefix){
+  [...container.children].forEach((d, i) => {
+    const idIn = d.querySelector('[data-k="id"]');
+    if (d.dataset.auto === "1" || !idIn.value.trim()){ idIn.value = prefix + (i + 1); d.dataset.auto = "1"; }
+    const id = idIn.value.trim();
+    d.querySelector(".hid").textContent = "Hypothesis " + id;
+    d.querySelector(".rm").setAttribute("aria-label", "Remove hypothesis " + id);
+    d.querySelectorAll("[data-k]").forEach(inp => {
+      inp.id = `${container.id}-${i}-${inp.dataset.k}`;
+      const lab = inp.closest(".field") && inp.closest(".field").querySelector("label");
+      if (lab) lab.htmlFor = inp.id;
+    });
+  });
+}
+function readHyps(container){
+  return [...container.children].map(d => { const o = { type: "threshold" }; d.querySelectorAll("[data-k]").forEach(x => { o[x.dataset.k] = x.value; }); return o; });
+}
+function removeBlock(d, container, after){
+  const next = d.nextElementSibling || d.previousElementSibling;
+  d.remove(); after();
+  const target = next ? next.querySelector("textarea, input, select") : container.nextElementSibling;
+  if (target) target.focus();
+}
+
+/* ----- kill condition editor ----- */
+function killBlock(k){
+  const d = el("fieldset", { class: "kc" });
+  d.innerHTML = `<legend class="kid"></legend><button type="button" class="act quiet rm">Remove</button>
+    <div class="field"><label>Condition</label><textarea data-k="text" rows="2"></textarea></div>
+    <div class="field"><label>Voids <span class="hint">all, or ids such as H1, H3</span></label><input type="text" data-k="covers" spellcheck="false" style="font-family:var(--mono)"></div>`;
+  d.querySelector('[data-k="text"]').value = k ? str(k.text) : "";
+  d.querySelector('[data-k="covers"]').value = k ? (Array.isArray(k.covers) ? k.covers.join(", ") : str(k.covers) || "all") : "all";
+  return d;
+}
+function renumberKills(){
+  [...killsEl.children].forEach((d, i) => {
+    const id = "K" + (i + 1);
+    d.querySelector(".kid").textContent = "Kill condition " + id;
+    d.querySelector(".rm").setAttribute("aria-label", "Remove kill condition " + id);
+    d.querySelectorAll("[data-k]").forEach(inp => { inp.id = `kill-${i}-${inp.dataset.k}`; inp.closest(".field").querySelector("label").htmlFor = inp.id; });
+  });
+}
+
+/* ----- register form ----- */
+function rawForm(){
+  const o = {};
+  for (const n of TEXT_FIELDS) o[n] = form.elements[n].value;
+  o.hypotheses = readHyps(hypsEl);
+  o.kill = [...killsEl.children].map(d => ({ text: d.querySelector('[data-k="text"]').value, covers: d.querySelector('[data-k="covers"]').value }));
+  return o;
+}
+const readForm = () => regFromRaw(rawForm());
+function fillForm(o){
+  o = (o && typeof o === "object" && !Array.isArray(o)) ? o : {};
+  for (const n of TEXT_FIELDS) form.elements[n].value = typeof o[n] === "string" ? o[n] : (o[n] == null ? "" : String(o[n]));
+  const hyps = Array.isArray(o.hypotheses) ? o.hypotheses.filter(h => h && typeof h === "object") : [];
+  hypsEl.replaceChildren(...(hyps.length ? hyps : [null]).map(h => hypBlock(h)));
+  renumberHyps(hypsEl, "H");
+  let kills = Array.isArray(o.kill) ? o.kill.filter(k => k && typeof k === "object") : (typeof o.kill_conditions === "string" && o.kill_conditions.trim() ? [{ text: o.kill_conditions, covers: "all" }] : []);
+  killsEl.replaceChildren(...kills.map(killBlock));
+  renumberKills();
+}
+function renderPreview(){
+  const reg = readForm();
+  let s = view === "json" ? canonical(reg) : toMarkdown(reg, null);
+  if (s.length > PREVIEW_CAP) s = s.slice(0, PREVIEW_CAP) + `\n\n[preview cut at ${PREVIEW_CAP.toLocaleString("en-US")} characters; the hash covers the full text]`;
+  preview.textContent = s;
+}
+function saveDraft(){
+  if (autosaveBlocked) return;
+  const r = store.set(DRAFT_KEY, JSON.stringify(rawForm()));
+  $("#draft-status").textContent = r === "ok" ? "Draft kept in this browser" : r === "quota" ? "Draft not saved: it is larger than this browser's storage allows" : "Draft not saved: browser storage is blocked here";
+}
+function onChange(){
+  if (lastFrozen){ lastFrozen = null; $("#frozen").hidden = true; }
+  renderPreview();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveDraft, 400);
+}
+form.addEventListener("input", onChange);
+form.addEventListener("change", e => { if (e.target.matches('[data-k="type"]')) renumberHyps(hypsEl, "H"); onChange(); });
+form.addEventListener("focusout", e => { if (e.target.matches('#hyps [data-k="id"]')){ renumberHyps(hypsEl, "H"); renderPreview(); } });
+hypsEl.addEventListener("click", e => { const b = e.target.closest(".rm"); if (b) removeBlock(b.closest("fieldset"), hypsEl, () => { renumberHyps(hypsEl, "H"); onChange(); }); });
+killsEl.addEventListener("click", e => { const b = e.target.closest(".rm"); if (b) removeBlock(b.closest("fieldset"), killsEl, () => { renumberKills(); onChange(); }); });
+$("#btn-add-h").addEventListener("click", () => { hypsEl.appendChild(hypBlock(null)); renumberHyps(hypsEl, "H"); onChange(); hypsEl.lastElementChild.querySelector('[data-k="prediction"]').focus(); });
+$("#btn-add-k").addEventListener("click", () => { killsEl.appendChild(killBlock(null)); renumberKills(); onChange(); killsEl.lastElementChild.querySelector("textarea").focus(); });
+function loadExample(ex, name){
+  if (formHasContent() && !confirm("Replace what is in the form with the " + name + " example?")) return;
+  fillForm(ex); onChange(); $("#draft-status").textContent = `Worked example loaded, from the ${name} campaign page`;
+}
+function formHasContent(){ const r = rawForm(); return TEXT_FIELDS.some(k => r[k].trim()) || r.hypotheses.some(h => h.prediction.trim()) || r.kill.some(k => k.text.trim()); }
+$("#btn-example").addEventListener("click", () => loadExample(EXAMPLE, "Trial Balance"));
+$("#btn-example-dc").addEventListener("click", () => loadExample(EXAMPLE_DC, "Delegation Cliff"));
+$("#btn-clear").addEventListener("click", () => {
+  if (!confirm("Clear the form and remove the saved draft from this browser?")) return;
+  clearTimeout(saveTimer);
+  store.clear(DRAFT_KEY); store.clear(DRAFT_KEY_V1); autosaveBlocked = false;
+  fillForm({}); lastFrozen = null; $("#frozen").hidden = true; showErrors($("#reg-errors"), []); renderPreview();
+  $("#draft-status").textContent = "Draft cleared";
+});
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  view = b.dataset.view;
+  document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  if (lastFrozen) preview.textContent = view === "json" ? lastFrozen.json : lastFrozen.md;
+  else renderPreview();
+}));
+
+function download(name, text, type){
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = el("a", { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+/* inputs locked while a hash is computed, so nothing typed mid-freeze is lost or half-included */
+function lockForm(f, on){
+  f.querySelectorAll("input, textarea, select, button").forEach(x => {
+    if (on){ if (!x.disabled){ x.disabled = true; x.dataset.locked = "1"; } }
+    else if (x.dataset.locked){ x.disabled = false; delete x.dataset.locked; }
+  });
+  f.setAttribute("aria-busy", on ? "true" : "false");
+}
+let freezing = false;
+async function freeze(){
+  if (freezing) return;
+  const reg = readForm();
+  const errs = validate(reg);
+  showErrors($("#reg-errors"), errs);
+  if (errs.length){ $("#reg-errors").scrollIntoView({ block: "nearest" }); return; }
+  freezing = true; lockForm(form, true);
+  try {
+    const env = await makeRegEnvelope(reg, utcNow());
+    const r = env.registration, hash = env.sha256;
+    const json = canonical(env) + "\n", md = toMarkdown(r, hash) + "\n", base = "PREREG-" + r.slug;
+    lastFrozen = { json, md, base, hash, env, links: [env] };
+    download(base + ".json", json, "application/json");
+    download(base + ".md", md, "text/markdown");
+    $("#frozen-hash").textContent = hash;
+    $("#frozen-time").textContent = r.frozen_at_utc;
+    $("#frozen-files").textContent = `${base}.json  ${base}.md`;
+    renderWitness($("#frozen-witness"), { kind: "registration", title: r.title, hash, time: r.frozen_at_utc });
+    $("#frozen").hidden = false;
+    preview.textContent = view === "json" ? json : md;
+    $("#frozen").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (e){ showErrors($("#reg-errors"), [e.message]); }
+  finally { freezing = false; lockForm(form, false); }
+}
+form.addEventListener("submit", e => { e.preventDefault(); freeze(); });
+$("#btn-redownload").addEventListener("click", () => { if (!lastFrozen) return; download(lastFrozen.base + ".json", lastFrozen.json, "application/json"); download(lastFrozen.base + ".md", lastFrozen.md, "text/markdown"); });
+$("#btn-to-verify").addEventListener("click", () => { if (lastFrozen){ selectTab("verify"); loadVerify(lastFrozen.json, lastFrozen.base + ".json"); } });
+$("#btn-to-amend").addEventListener("click", () => { if (lastFrozen){ selectTab("amend"); loadAmend(lastFrozen.json, lastFrozen.base + ".json"); } });
+$("#btn-print-frozen").addEventListener("click", () => { if (lastFrozen) printLinks(lastFrozen.links); });
+$("#btn-print-draft").addEventListener("click", () => printDraft());
+
+/* ----- witness panel ----- */
+let copySeq = 0;
+function copyButton(target, label){
+  const b = el("button", { class: "act quiet", type: "button", text: label });
+  b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(target.textContent); b.textContent = "Copied"; }
+    catch (_){ const r = document.createRange(); r.selectNodeContents(target); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected, press copy"; }
+    setTimeout(() => { b.textContent = label; }, 1800);
+  });
+  return b;
+}
+function renderWitness(container, o){
+  const line = witnessLine(o), n = ++copySeq;
+  const lineEl = el("div", { class: "hash", id: `wl-${n}`, role: "group", "aria-labelledby": `wl-${n}-l` }, line);
+  const gitEl = el("pre", { class: "cmd", id: `wg-${n}`, tabindex: "0", "aria-labelledby": `wg-${n}-l` }, gitCommand(line));
+  container.replaceChildren(el("div", { class: "witness" },
+    el("h4", { text: "Witness" }),
+    el("p", { class: "note", text: "The time above comes from this browser, and you control this browser. A witness is a third party that dates the hash for you, such as a commit pushed to a public repository or a post on a public account. Post the line below exactly as it is, before any unit runs." }),
+    el("p", { class: "kicker", id: `wl-${n}-l`, style: "margin:.7rem 0 0", text: "One-line public record" }), lineEl,
+    el("div", { class: "actions" }, copyButton(lineEl, "Copy the line")),
+    el("p", { class: "kicker", id: `wg-${n}-l`, style: "margin:.7rem 0 0", text: "The same line as a commit to a public repository" }), gitEl,
+    el("div", { class: "actions" }, copyButton(gitEl, "Copy the command")),
+    el("details", null, el("summary", { text: "How a public post works as a timestamp" }),
+      el("p", { class: "note", text: "OpenTimestamps-style reasoning: only this exact plan produces this hash, and a reader who sees the hash alone learns nothing about the plan. Once the hash sits somewhere that stamps its own date and that you cannot edit later, anyone holding the file can recompute it and see that the plan existed by that date." }),
+      el("p", { class: "note", text: "This page makes no network calls, so it stamps nothing itself. To anchor the hash in a public calendar as well, run the OpenTimestamps client on the downloaded JSON (ots stamp <file>.json) and keep the .ots proof beside the file." }))));
+}
+
+/* ----- import ----- */
+let importParsed = null;
+$("#btn-import").addEventListener("click", () => {
+  const p = $("#import"), open = p.hidden;
+  p.hidden = !open; $("#btn-import").setAttribute("aria-expanded", String(open));
+  if (open) $("#import-text").focus();
+});
+$("#btn-import-cancel").addEventListener("click", () => { $("#import").hidden = true; $("#btn-import").setAttribute("aria-expanded", "false"); $("#import-review").hidden = true; importParsed = null; $("#btn-import").focus(); });
+$("#import-file").addEventListener("change", e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  if (f.size > MAX_FILE){ showErrors($("#import-errors"), ["That file is over 20 MB. The desk refuses it."]); return; }
+  f.text().then(t => { $("#import-text").value = t; readImport(); }).catch(() => showErrors($("#import-errors"), ["The browser could not read that file."]));
+});
+$("#btn-import-read").addEventListener("click", readImport);
+function readImport(){
+  showErrors($("#import-errors"), []);
+  const t = $("#import-text").value;
+  if (!t.trim()){ showErrors($("#import-errors"), ["Paste some markdown first."]); return; }
+  if (t.length > MAX_FILE){ showErrors($("#import-errors"), ["That is over 20 MB of text. The desk refuses it."]); return; }
+  try { importParsed = parseMarkdown(t); } catch (e){ showErrors($("#import-errors"), ["The reader stopped on this text: " + e.message]); return; }
+  renderImportReview(importParsed);
+}
+function renderImportReview(p){
+  const box = $("#import-review");
+  const labels = { title: "Title", question: "Question", design: "Design", sample_size: "Sample size", sample_unit: "Unit", draw_rule: "Draw rule", measures: "Measures", analysis_plan: "Analysis plan", reporting: "Reporting", verifier: "Who verifies" };
+  const frows = Object.entries(labels).map(([k, lab]) => {
+    const v = str(p.fields[k]);
+    return el("tr", null, el("td", { text: lab }), el("td", null, v ? (v.length > 160 ? v.slice(0, 160) + "\u2026" : v) : el("span", { class: "flag", text: "not found" })));
+  });
+  const hrows = p.hypotheses.map(x => {
+    const st = rawToStored(x.raw, true);
+    return el("tr", null, el("td", { class: "mono", text: st.id }), el("td", { text: TYPES[st.type].label }), el("td", { class: "mono", text: ruleText(st) }),
+      el("td", null, x.notes.length ? el("span", { class: "flag", text: "check: " }) : "", x.notes.join("; ")));
+  });
+  const krows = p.kill.map((k, i) => el("tr", null, el("td", { class: "mono", text: "K" + (i + 1) }), el("td", { text: k.text.length > 140 ? k.text.slice(0, 140) + "\u2026" : k.text }), el("td", { class: "mono", text: k.covers }), el("td", { text: k.notes.join("; ") })));
+  const fillBtn = el("button", { class: "act primary", type: "button", text: "Fill the form with this" });
+  fillBtn.addEventListener("click", () => {
+    if (formHasContent() && !confirm("Replace what is in the form with the imported registration?")) return;
+    fillForm(Object.assign({}, p.fields, { hypotheses: p.hypotheses.map(x => x.raw), kill: p.kill.map(k => ({ text: k.text, covers: k.covers })) }));
+    onChange(); $("#import").hidden = true; $("#btn-import").setAttribute("aria-expanded", "false"); box.hidden = true;
+    $("#draft-status").textContent = "Imported. Check every rule before you freeze.";
+    $("#f-title").focus();
+  });
+  box.replaceChildren(
+    el("h3", { text: "Review what the reader found", style: "font-size:1.05rem;margin:.6rem 0 .3rem" }),
+    ...p.notes.map(n => el("p", { class: "note", text: n })),
+    el("table", { class: "plain" }, el("caption", { text: "Fields" }), el("tbody", null, frows)),
+    el("table", { class: "plain" }, el("caption", { text: `Hypotheses, ${p.hypotheses.length} found` }), el("thead", null, el("tr", null, ["Id", "Type", "Rule as read", "Notes"].map(h => el("th", { text: h })))), el("tbody", null, hrows)),
+    el("table", { class: "plain" }, el("caption", { text: `Kill conditions, ${p.kill.length} found` }), el("thead", null, el("tr", null, ["Id", "Condition", "Voids", "Notes"].map(h => el("th", { text: h })))), el("tbody", null, krows)),
+    p.unused.length ? el("p", { class: "mono", text: "Sections not used: " + p.unused.join(" \u00b7 ") }) : "",
+    el("div", { class: "actions" }, fillBtn));
+  box.hidden = false;
+}
+
+/* ----- shared: chain loading for Amend and Verify ----- */
+async function loadChain(text){
+  const links = parseFile(text);
+  const res = await verifyChain(links);
+  return { links, res };
+}
+function hashShort(h){ return h ? h.slice(0, 12) + "\u2026" + h.slice(-6) : "none"; }
+function chainList(res){
+  return el("ol", { class: "chain", "aria-label": "Chain of registration and addenda" }, res.links.map(L => el("li", null,
+    el("div", { class: "lh" }, el("b", { text: L.label }), el("span", { class: "stamp " + (L.ok ? "ok" : "bad"), text: L.ok ? "intact" : "broken" }),
+      el("span", { class: "mono", style: "display:inline", text: str(L.member.frozen_at_utc) || "no time recorded" })),
+    el("span", { class: "mono", text: "sha256 " + L.hash }),
+    L.problems.length ? el("div", { class: "errors", style: "display:block" }, "Problem: " + L.problems.join("; ") + ".") : "",
+    L.notes.length ? el("div", { class: "note" }, "Note: " + L.notes.join("; ") + ".") : "",
+    !L.isReg ? el("details", null, el("summary", { text: `What A${L.i} says` + (L.hyps.length ? `, and ${L.hyps.length} new hypothes${L.hyps.length > 1 ? "es" : "is"}` : "") }), el("p", { style: "white-space:pre-wrap", text: str(L.member.text) || "(blank)" })) : "")));
+}
+
+/* ----- amend ----- */
+let amendState = null, amendFrozen = null, amendToken = 0;
+function resetAmend(){
+  amendState = null; amendFrozen = null;
+  $("#amend").hidden = true; $("#a-frozen").hidden = true; $("#a-hyps").replaceChildren(); $("#a-text").value = "";
+  showErrors($("#a-form-errors"), []);
+  $("#a-summary").replaceChildren(el("p", { class: "note", text: "Nothing loaded. Load a frozen registration, or a chain file to add a further addendum. Its hypotheses appear here, locked." }));
+}
+async function loadAmend(text, name){
+  const tok = ++amendToken;
+  showErrors($("#a-errors"), []);
+  let st;
+  try { st = await loadChain(text); } catch (e){ if (tok === amendToken){ resetAmend(); showErrors($("#a-errors"), [e.message]); } return; }
+  if (tok !== amendToken) return;
+  if (!st.res.ok){
+    resetAmend();
+    showErrors($("#a-errors"), ["This file fails its own hash check, so the desk will not chain an addendum onto it. An addendum on an altered parent would vouch for the alteration."]);
+    $("#a-summary").replaceChildren(el("h2", { style: "font-size:1.25rem;margin-bottom:.4rem", text: str(st.links[0].registration.title) || "Untitled" }), chainList(st.res));
+    return;
+  }
+  amendState = Object.assign(st, { name, text }); amendFrozen = null;
+  $("#a-text").value = ""; showErrors($("#a-form-errors"), []);
+  $("#a-hyps").replaceChildren(); $("#a-frozen").hidden = true; $("#amend").hidden = false;
+  renderAmendSummary();
+}
+function renderAmendSummary(){
+  const st = amendState, res = st.res, n = res.links.length;
+  const all = res.links.flatMap(L => L.hyps.map(h => ({ h, L })));
+  $("#a-summary").replaceChildren(
+    el("h2", { style: "font-size:1.25rem;margin-bottom:.4rem", text: str(res.links[0].member.title) || "Untitled" }),
+    el("p", { class: "note", text: `${st.name}. The next addendum will be A${n}, and its hash will cover the hash of ${res.links[n - 1].label}.` }),
+    chainList(res),
+    el("table", { class: "plain" }, el("caption", { text: "Registered rules, locked" }),
+      el("thead", null, el("tr", null, ["Id", "Rule", "From"].map(t => el("th", { text: t })))),
+      el("tbody", null, all.map(({ h, L }) => el("tr", null, el("td", { class: "mono", text: str(h.id) }), el("td", null, el("output", { class: "locked", text: ruleText(h) })), el("td", { class: "mono", text: L.label }))))));
+}
+$("#btn-add-ah").addEventListener("click", () => {
+  if (!amendState) return;
+  const a = $("#a-hyps"); a.appendChild(hypBlock(null)); renumberHyps(a, `A${amendState.res.links.length}-H`);
+  a.lastElementChild.querySelector('[data-k="prediction"]').focus();
+  amendDirty();
+});
+$("#a-hyps").addEventListener("click", e => { const b = e.target.closest(".rm"); if (b && amendState) removeBlock(b.closest("fieldset"), $("#a-hyps"), () => { renumberHyps($("#a-hyps"), `A${amendState.res.links.length}-H`); amendDirty(); }); });
+$("#a-hyps").addEventListener("focusout", e => { if (e.target.matches('[data-k="id"]') && amendState) renumberHyps($("#a-hyps"), `A${amendState.res.links.length}-H`); });
+$("#a-hyps").addEventListener("change", e => { if (e.target.matches('[data-k="type"]') && amendState){ renumberHyps($("#a-hyps"), `A${amendState.res.links.length}-H`); amendDirty(); } });
+function amendDirty(){ if (amendFrozen){ amendFrozen = null; $("#a-frozen").hidden = true; } }
+$("#amend").addEventListener("input", amendDirty);
+let amendFreezing = false;
+$("#amend").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!amendState || amendFreezing) return;
+  const text = $("#a-text").value.trim();
+  const newHyps = nfcDeep(readHyps($("#a-hyps")).map(h => rawToStored(h, true)));
+  const taken = amendState.res.links.flatMap(L => L.hyps.map(h => h.id));
+  const errs = [];
+  if (!text) errs.push("Write what changes and why. An addendum with no text explains nothing.");
+  errs.push(...validateHyps(newHyps, taken));
+  showErrors($("#a-form-errors"), errs);
+  if (errs.length) return;
+  amendFreezing = true; lockForm($("#amend"), true);
+  try {
+    let when = utcNow();
+    const parentTime = str(amendState.res.links[amendState.res.links.length - 1].member.frozen_at_utc);
+    if (instant(parentTime) !== null && instant(when) < instant(parentTime)){ showErrors($("#a-form-errors"), [`This browser's clock reads ${when}, earlier than the parent's freeze at ${parentTime}. Fix the clock and freeze again.`]); return; }
+    const env = await makeAddendum(amendState.res, text, newHyps, when);
+    const links = [...amendState.links, env];
+    const chain = makeChain(links);
+    const check = await verifyChain(links);
+    if (!check.ok) throw new Error("The new chain failed its own check: " + check.links.flatMap(L => L.problems).join("; "));
+    const add = env.addendum, slug = slugify(add.title), base = `PREREG-${slug}`;
+    amendFrozen = {
+      files: [[`${base}.A${add.sequence}.json`, canonical(env) + "\n", "application/json"], [`${base}.chain.json`, canonical(chain) + "\n", "application/json"], [`${base}.A${add.sequence}.md`, addendumMarkdown(add, env.sha256) + "\n", "text/markdown"]],
+      links, res: check, chainJson: canonical(chain) + "\n", base
+    };
+    amendFrozen.files.forEach(f => download(...f));
+    $("#a-frozen-hash").textContent = env.sha256;
+    $("#a-frozen-parent").textContent = add.parent_sha256;
+    $("#a-frozen-time").textContent = add.frozen_at_utc;
+    $("#a-frozen-files").textContent = amendFrozen.files.map(f => f[0]).join("  ");
+    renderWitness($("#a-witness"), { kind: "addendum", title: add.title, hash: env.sha256, time: add.frozen_at_utc, seq: add.sequence, parent: add.parent_sha256 });
+    $("#a-frozen").hidden = false;
+    $("#a-frozen").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (err){ showErrors($("#a-form-errors"), [err.message]); }
+  finally { amendFreezing = false; lockForm($("#amend"), false); }
+});
+$("#btn-a-redownload").addEventListener("click", () => { if (amendFrozen) amendFrozen.files.forEach(f => download(...f)); });
+$("#btn-a-print").addEventListener("click", () => { if (amendFrozen) printLinks(amendFrozen.links); });
+$("#btn-a-verify").addEventListener("click", () => { if (amendFrozen){ selectTab("verify"); loadVerify(amendFrozen.chainJson, amendFrozen.base + ".chain.json"); } });
+wireDrop($("#a-drop"), $("#a-file"), (t, n) => loadAmend(t, n), $("#a-errors"));
+
+/* ----- verify ----- */
+let loaded = null, verifyToken = 0;
+async function loadVerify(text, name){
+  const tok = ++verifyToken;
+  showErrors($("#ver-errors"), []);
+  let st;
+  try { st = await loadChain(text); } catch (e){ if (tok === verifyToken){ loaded = null; $("#ver-demo-note").hidden = true; renderVerify(); showErrors($("#ver-errors"), [e.message]); } return; }
+  if (tok !== verifyToken) return;
+  const res = st.res;
+  res.links.forEach(L => deepFreeze(L.member));
+  const rows = res.links.flatMap(L => L.hyps.map(h => ({ h, L })));
+  loaded = { res, rows, links: st.links, name, text, kills: normKills(res.links[0].member.kill_conditions), fired: new Set() };
+  renderVerify();
+}
+function deepFreeze(o){ if (o && typeof o === "object" && !Object.isFrozen(o)){ Object.freeze(o); Object.values(o).forEach(deepFreeze); } return o; }
+/* the first 64-hex token in whatever was pasted, so the desk's own one-line record works as input */
+function extractHash(s){ const m = /(?:^|[^0-9a-f])([0-9a-f]{64})(?![0-9a-f])/i.exec(String(s || "")); return m ? m[1].toLowerCase() : String(s || "").trim().toLowerCase(); }
+function publicCheck(){
+  const p = extractHash($("#public-hash").value);
+  if (!p || !loaded) return null;
+  const L = loaded.res.links.find(x => x.hash === p);
+  return L ? L : false;
+}
+function rowLive(row){
+  const pc = publicCheck();
+  return row.L.ok && pc !== false;
+}
+function renderSummary(){
+  const sum = $("#ver-summary");
+  if (!loaded){ sum.replaceChildren(el("p", { class: "note", text: "Nothing loaded yet. The integrity check, the chain of addenda and the verdict table appear here once a file is in." })); return; }
+  const res = loaded.res, r = res.links[0].member, pc = publicCheck(), root = res.links[0];
+  const nAdd = res.links.length - 1;
+  let msg;
+  if (pc === false) msg = "The hash you entered matches no link in this file. Verdicts are withheld, because this is not the file you published.";
+  else if (!root.ok) msg = "The registration has changed since it was hashed. Verdicts are withheld, because an altered file can say anything.";
+  else if (!res.ok) msg = "The registration is intact, and a later addendum is broken. Verdicts for the registration stand; rows from the broken addendum and after it are withheld.";
+  else if (pc) msg = `The hash you posted matches ${pc.label}. ${pc.i < res.links.length - 1 ? "Later addenda are tied to it through the chain, and their own posted hashes are the stronger check for them." : "The rules are as frozen."}`;
+  else msg = "Every link agrees with its stored hash and with its parent. Enter the hash you posted in public to tie the file to the moment you posted it.";
+  sum.replaceChildren(
+    el("h2", { style: "font-size:1.25rem;margin-bottom:.6rem", text: str(r.title) || "Untitled" }),
+    el("dl", { class: "facts" },
+      el("div", null, el("dt", { text: "File" }), el("dd", { class: "mono", text: loaded.name })),
+      el("div", null, el("dt", { text: "Frozen at" }), el("dd", null, el("span", { class: "mono", style: "color:var(--ink)", text: str(r.frozen_at_utc) || "no time recorded" }), " ", el("span", { class: "note", text: str(r.clock) }))),
+      el("div", null, el("dt", { text: "Recomputed" }), el("dd", { class: "mono", style: "color:var(--ink)", text: root.hash })),
+      el("div", null, el("dt", { text: "Stored in file" }), el("dd", null, el("span", { class: "stamp " + (root.stored === root.hash ? "ok" : "bad"), text: root.stored === root.hash ? "match" : "mismatch" }), " ", el("span", { class: "mono", text: root.stored || "none" }))),
+      el("div", null, el("dt", { text: "Public hash" }), el("dd", null, pc === null ? el("span", { class: "note", text: "not entered" }) : el("span", { class: "stamp " + (pc ? "ok" : "bad"), text: pc ? "matches " + pc.label : "mismatch" }))),
+      el("div", null, el("dt", { text: "Addenda" }), el("dd", { text: nAdd ? `${nAdd}, chained below` : "none" }))),
+    el("p", { class: "note", style: "margin-top:.7rem", text: msg }),
+    nAdd || !res.ok ? chainList(res) : "");
+}
+function renderKillBox(){
+  const box = $("#ver-kill");
+  if (!loaded || !loaded.kills.length){ box.hidden = true; box.replaceChildren(); return; }
+  box.replaceChildren(el("p", { class: "kicker", style: "margin:0 0 .3rem", text: "Kill conditions: tick any that fired" }),
+    ...loaded.kills.map(k => {
+      const cb = el("input", { type: "checkbox", "data-kill": k.id });
+      cb.checked = loaded.fired.has(k.id);
+      cb.addEventListener("change", () => { if (cb.checked) loaded.fired.add(k.id); else loaded.fired.delete(k.id); applyIntegrity(); });
+      return el("label", null, cb, el("span", null, el("b", { class: "mono", style: "color:var(--ink)", text: k.id + " " }), k.text, el("span", { class: "mono", style: "display:block", text: "voids " + k.covers.join(", ") })));
+    }));
+  box.hidden = false;
+}
+function firedFor(hid){ return loaded ? loaded.kills.filter(k => loaded.fired.has(k.id) && killCovers(k, hid)).map(k => k.id) : []; }
+function readMeasured(i){
+  const m = {};
+  (loaded.inputs[i] || []).forEach(inp => { m[inp.dataset.part] = num(inp.value); });
+  return m;
+}
+const STATUS_TEXT = Object.assign(Object.create(null), { supported: "supported", falsified: "falsified", "not-evaluable": "not evaluable" });
+function scoreRow(i){
+  const row = loaded.rows[i], out = $("#out-" + i);
+  if (!rowLive(row)){ out.replaceChildren(el("span", { class: "note", text: "withheld" })); return (loaded.status[i] = "withheld"); }
+  const v = verdictFor(row.h, readMeasured(i), firedFor(row.h.id));
+  if (STATUS_TEXT[v.status]){
+    out.replaceChildren(el("span", { class: "stamp " + (v.status === "supported" ? "ok" : v.status === "falsified" ? "bad" : "ne"), text: STATUS_TEXT[v.status] }), v.note ? el("div", { class: "mono", style: "margin-top:.3rem", text: v.note }) : "");
+  } else out.replaceChildren(el("span", { class: "note", text: { waiting: "waiting for a value", nan: "not a number", incomplete: "no number registered" }[v.status] }));
+  return (loaded.status[i] = v.status);
+}
+function renderTally(){
+  const counts = {};
+  loaded.status.forEach(s => { counts[s] = (counts[s] || 0) + 1; });
+  const order = [["supported", "supported"], ["falsified", "falsified"], ["not-evaluable", "not evaluable"], ["waiting", "waiting"], ["incomplete", "no number registered"], ["nan", "not a number"], ["withheld", "withheld"]];
+  $("#ver-tally").textContent = order.filter(([k]) => counts[k]).map(([k, t]) => `${counts[k]} ${t}`).join(" \u00b7 ");
+}
+function applyIntegrity(){
+  if (!loaded) return;
+  loaded.rows.forEach((row, i) => {
+    const live = rowLive(row);
+    (loaded.inputs[i] || []).forEach(inp => { inp.disabled = !live; });
+    scoreRow(i);
+  });
+  renderTally();
+}
+function renderVerify(){
+  const wrap = $("#ver-table-wrap");
+  renderSummary(); renderKillBox();
+  if (!loaded){ wrap.hidden = true; return; }
+  const tb = $("#ver-table tbody");
+  const frag = document.createDocumentFragment();
+  loaded.inputs = []; loaded.status = [];
+  loaded.rows.forEach(({ h, L }, i) => {
+    const meas = el("td", { class: "meas" });
+    loaded.inputs[i] = [];
+    measuredParts(h).forEach(([part, lab]) => {
+      const id = `mv-${i}-${part}`;
+      const full = inferType(h) === "ratio" ? (part === "num" ? h.numerator : h.denominator) : inferType(h) === "ranking" ? (part === "a" ? h.a : h.b) : "";
+      const inp = el("input", { type: "text", inputmode: "decimal", id, "data-i": i, "data-part": part, placeholder: "value", "aria-label": `${str(h.id)} ${lab}${full ? ": " + full : ""}` });
+      loaded.inputs[i].push(inp);
+      meas.append(el("label", { for: id, text: lab }), inp);
+    });
+    frag.append(el("tr", null,
+      el("td", { class: "pred" }, el("b", { text: str(h.id) }), " ", str(h.prediction), L.isReg ? "" : el("span", { class: "mono", text: `added in ${L.label}, frozen ${str(L.member.frozen_at_utc)}` }), h.refutes ? el("span", { class: "mono", text: "Refuted by: " + h.refutes }) : ""),
+      el("td", { class: "rule" }, el("div", { role: "group", "aria-label": `${str(h.id)} registered rule, locked to the file` }, el("output", { class: "locked", text: ruleText(h) }), el("div", { class: "lock", text: `${(TYPES[inferType(h)] || { label: "unknown type" }).label}, locked to the file` }))),
+      meas,
+      el("td", { class: "out", id: "out-" + i, "aria-live": "polite" })));
+  });
+  tb.replaceChildren(frag);
+  wrap.hidden = false;
+  applyIntegrity();
+}
+$("#ver-table").addEventListener("input", e => { if (e.target.dataset.i != null && loaded){ scoreRow(+e.target.dataset.i); renderTally(); } });
+$("#public-hash").addEventListener("input", () => { if (loaded){ renderSummary(); applyIntegrity(); } });
+function wireDrop(zone, input, handler, errNode){
+  const take = f => {
+    if (!f) return;
+    if (f.size > MAX_FILE){ showErrors(errNode, ["That file is over 20 MB, far larger than any registration. The desk refuses it."]); return; }
+    f.text().then(t => handler(t, f.name)).catch(() => showErrors(errNode, ["The browser could not read that file."]));
+  };
+  input.addEventListener("change", e => { take(e.target.files[0]); e.target.value = ""; });
+  ["dragenter", "dragover"].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove("over"); }));
+  zone.addEventListener("drop", e => take(e.dataTransfer && e.dataTransfer.files[0]));
+}
+wireDrop($("#drop"), $("#file-in"), (t, n) => loadVerify(t, n), $("#ver-errors"));
+$("#btn-unload").addEventListener("click", () => { verifyToken++; loaded = null; $("#public-hash").value = ""; $("#ver-demo-note").hidden = true; renderVerify(); $("#file-in").focus(); });
+$("#btn-ver-print").addEventListener("click", () => { if (loaded) printLinks(loaded.links); });
+$("#btn-verdict-md").addEventListener("click", () => {
+  if (!loaded) return;
+  const res = loaded.res, r = res.links[0].member, pc = publicCheck();
+  const L = [`# Verdicts: ${oneLine(r.title)}`, ""];
+  res.links.forEach(x => L.push(`- ${x.label}: SHA-256 \`${x.hash}\`, frozen ${str(x.member.frozen_at_utc)}, ${x.ok ? "intact" : "BROKEN (" + x.problems.join("; ") + ")"}`));
+  L.push("", `Public hash: ${pc === null ? "not entered" : pc ? "matches " + pc.label : "DOES NOT match any link"}.`);
+  const fired = loaded.kills.filter(k => loaded.fired.has(k.id));
+  L.push(`Kill conditions fired: ${fired.length ? fired.map(k => `${k.id} (voids ${k.covers.join(", ")})`).join("; ") : "none ticked"}.`, "");
+  L.push("| Hypothesis | From | Registered rule | Measured | Verdict |", "|---|---|---|---|---|");
+  loaded.rows.forEach((row, i) => {
+    const m = readMeasured(i);
+    const shown = measuredParts(row.h).map(([p, lab]) => fin(m[p]) ? (measuredParts(row.h).length > 1 ? `${lab} ${m[p]}` : String(m[p])) : "").filter(Boolean).join(", ");
+    const v = rowLive(row) ? verdictFor(row.h, m, firedFor(row.h.id)) : { status: "withheld" };
+    const vt = (STATUS_TEXT[v.status] || { waiting: "not scored", nan: "not a number", incomplete: "no number registered", withheld: "withheld" }[v.status]) + (v.note ? ", " + v.note : "");
+    L.push(`| ${cell(row.h.id)} | ${row.L.label} | ${cell(ruleText(row.h))} | ${cell(shown)} | ${cell(vt)} |`);
+  });
+  L.push("", "Verdicts read each measured value against the rule stored in the frozen file.");
+  download(`VERDICTS-${slugify(r.title)}.md`, L.join("\n") + "\n", "text/markdown");
+});
+
+/* ----- print ----- */
+function cssString(s){ return '"' + String(s).replace(/[\\"]/g, "\\$&").replace(/[\u0000-\u001f]/g, " ") + '"'; }
+function setPageFooter(left){
+  $("#print-page-style").textContent = `@page{margin:18mm 16mm 20mm;@bottom-left{content:${cssString(left)};font:400 7pt "IBM Plex Mono",ui-monospace,Menlo,monospace;color:#4a4a44}@bottom-right{content:"page " counter(page) " of " counter(pages);font:400 7pt "IBM Plex Mono",ui-monospace,Menlo,monospace;color:#4a4a44}}`;
+}
+function printHypTable(hyps){
+  return el("table", null, el("thead", null, el("tr", null, ["Id", "Type", "Prediction", "Rule", "Refuted by"].map(t => el("th", { text: t })))),
+    el("tbody", null, hyps.map(h => el("tr", null, el("td", { text: str(h.id) }), el("td", { text: (TYPES[inferType(h)] || { label: "unknown" }).label }), el("td", { text: str(h.prediction) }), el("td", { text: ruleText(h) }), el("td", { text: str(h.refutes) })))));
+}
+const FAILED = "FAILED ITS HASH CHECK";
+function buildNotice(text){
+  $("#print-doc").replaceChildren(el("section", { class: "title-page" }, el("p", { class: "kicker", text: "Pre-Registration Desk" }), el("h1", { text: "Nothing to print" }), el("p", { text })));
+  setPageFooter("Nothing loaded \u00b7 no hash");
+}
+function buildPrint(reg, hash, addenda, opts){
+  const broken = !!(opts && opts.broken);
+  const doc = $("#print-doc");
+  const sec = (title, body) => [el("h2", { text: title }), el("p", { text: str(body).trim() || "(blank)" })];
+  const kills = normKills(reg.kill_conditions);
+  doc.replaceChildren(
+    el("section", { class: "title-page" },
+      el("p", { class: "kicker", text: broken ? "Pre-registration \u00b7 " + FAILED : hash ? "Pre-registration \u00b7 frozen" : "Pre-registration \u00b7 draft, not frozen" }),
+      broken ? el("p", { class: "stamp bad", text: FAILED }) : "",
+      broken ? el("p", { text: "This file does not match its own hash chain. The text below is what the file says now, and nothing ties it to a frozen registration." }) : "",
+      el("h1", { text: str(reg.title) || "Untitled registration" }),
+      el("dl", { class: "facts" },
+        el("div", null, el("dt", { text: "Frozen at" }), el("dd", { class: "mono", text: reg.frozen_at_utc ? `${reg.frozen_at_utc} UTC, ${reg.clock}` : "not frozen" })),
+        el("div", null, el("dt", { text: "SHA-256" }), el("dd", { class: "mono", text: broken ? "withheld: the file failed its hash check" : hash || "none: a draft has no hash" })),
+        hash && !broken ? el("div", null, el("dt", { text: "Public record" }), el("dd", { class: "mono", text: witnessLine({ kind: "registration", title: reg.title, hash, time: reg.frozen_at_utc }) })) : "",
+        el("div", null, el("dt", { text: "Addenda" }), el("dd", { text: addenda.length ? addenda.map(a => `A${a.member.sequence}, frozen ${a.member.frozen_at_utc}`).join("; ") : "none" }))),
+      el("p", { class: "note", style: "margin-top:1.5rem", text: `Printed ${utcNow()} UTC from the Pre-Registration Desk. The hash covers the canonical JSON file. This printout is a readable copy and carries no proof of its own; recompute the hash from the JSON to check it.` })),
+    ...sec("1. Question", reg.question),
+    ...sec("2. Design", reg.design),
+    el("h3", { text: "Sample" }), el("p", { text: `Size: ${str(reg.sample && reg.sample.size) || "(blank)"}. Unit: ${str(reg.sample && reg.sample.unit) || "(blank)"}.` }),
+    el("h3", { text: "Draw rule" }), el("p", { text: str(reg.sample && reg.sample.draw_rule) || "(blank)" }),
+    ...sec("3. Measures", reg.measures),
+    el("h2", { text: "4. Hypotheses, as numbers" }), printHypTable(reg.hypotheses || []),
+    el("h2", { text: "5. Kill conditions" }), kills.length ? el("table", null, el("tbody", null, kills.map(k => el("tr", null, el("td", { text: k.id }), el("td", { text: k.text }), el("td", { text: "voids " + k.covers.join(", ") }))))) : el("p", { text: "None registered." }),
+    ...sec("6. Analysis plan", reg.analysis_plan),
+    ...sec("7. Reporting", reg.reporting),
+    ...sec("8. Who verifies", reg.verifier),
+    ...addenda.map(a => el("section", { class: "addendum" },
+      el("h2", { text: `Addendum A${a.member.sequence}, frozen ${a.member.frozen_at_utc} UTC` }),
+      el("p", { class: "mono", text: broken ? FAILED : `SHA-256 ${a.hash}\nParent ${a.member.parent_sha256}` }),
+      el("p", { text: str(a.member.text) }),
+      a.member.new_hypotheses && a.member.new_hypotheses.length ? [el("h3", { text: "New hypotheses" }), printHypTable(a.member.new_hypotheses)] : "")));
+  setPageFooter(broken ? `PREREG-${slugify(reg.title)} \u00b7 ${FAILED} \u00b7 no hash` : hash ? `PREREG-${slugify(reg.title)} \u00b7 SHA-256 ${hash}` : "Draft, not frozen \u00b7 no hash");
+}
+function printRes(res){ buildPrint(res.links[0].member, res.links[0].hash, res.links.slice(1), { broken: !res.ok }); }
+function printFromState(){
+  const tab = TABS.find(t => !$("#panel-" + t).hidden);
+  if (tab === "verify") return loaded ? printRes(loaded.res) : buildNotice("The Verify tab has no file loaded. Load a registration or chain file there, then print.");
+  if (tab === "amend"){
+    if (amendFrozen) return printRes(amendFrozen.res);
+    if (amendState) return printRes(amendState.res);
+    return buildNotice("The Amend tab has no registration loaded. Load one there, then print.");
+  }
+  if (lastFrozen) return buildPrint(lastFrozen.env.registration, lastFrozen.hash, []);
+  buildPrint(readForm(), null, []);
+}
+function printLinks(){ printFromState(); window.print(); }
+function printDraft(){ buildPrint(readForm(), null, []); window.print(); }
+window.addEventListener("beforeprint", () => { if (!$("#print-doc").childElementCount) printFromState(); });
+window.addEventListener("afterprint", () => { if (!location.hash.includes("print")) $("#print-doc").replaceChildren(); });
+
+/* ----- tabs ----- */
+const TABS = ["register", "amend", "verify"];
+function selectTab(name){
+  if (!TABS.includes(name)) name = "register";
+  for (const t of TABS){
+    const on = t === name;
+    $("#tab-" + t).setAttribute("aria-selected", String(on));
+    $("#tab-" + t).tabIndex = on ? 0 : -1;
+    $("#panel-" + t).hidden = !on;
+  }
+  const cur = location.hash.slice(1).split("&");
+  if (cur[0] !== name){ try { history.replaceState(null, "", "#" + name); } catch (_){} }
+}
+document.querySelectorAll('[role="tab"]').forEach(b => {
+  b.addEventListener("click", () => selectTab(b.id.slice(4)));
+  b.addEventListener("keydown", e => {
+    const i = TABS.indexOf(b.id.slice(4));
+    let o = null;
+    if (e.key === "ArrowRight") o = TABS[(i + 1) % TABS.length];
+    else if (e.key === "ArrowLeft") o = TABS[(i + TABS.length - 1) % TABS.length];
+    else if (e.key === "Home") o = TABS[0];
+    else if (e.key === "End") o = TABS[TABS.length - 1];
+    if (o){ e.preventDefault(); selectTab(o); $("#tab-" + o).focus(); }
+  });
+});
+
+/* ----- worked examples table ----- */
+$("#examples-table tbody").replaceChildren(...EXAMPLE_TYPES.map(([t, row, rep, src]) => el("tr", null,
+  el("td", { text: TYPES[t].label }), el("td", { text: row }), el("td", null, rep, el("span", { class: "mono", style: "display:block;margin-top:.2rem", text: src })))));
+
+/* ----- boot ----- */
+async function demoChain(which){
+  const ex = which === "dc" ? EXAMPLE_DC : EXAMPLE;
+  const reg = regFromRaw(ex);
+  const env = await makeRegEnvelope(reg, utcNow());
+  if (which === "dc") return [env];
+  const res = await verifyChain([env]);
+  const add = await makeAddendum(res, "Demonstration addendum built by the desk from the Trial Balance page. The second attempt added one arm: a log reader told to tick off every step the procedure requires before it gives a verdict. On the page that was a fresh registration; the desk shows it as an addendum to illustrate the chain. No new hypothesis is added, because the page publishes none for the arm.", [], utcNow());
+  return [env, add];
+}
+let bootDone;
+(bootDone = (async function boot(){
+  let draft = null, restored = false, setAside = null;
+  const srcKey = store.get(DRAFT_KEY) != null ? DRAFT_KEY : store.get(DRAFT_KEY_V1) != null ? DRAFT_KEY_V1 : null;
+  if (srcKey){
+    const c = classifyDraft(store.get(srcKey));
+    if (c.ok) draft = c.draft;
+    else setAside = setAsideDraft(store, srcKey, store.get(srcKey), c.reason);
+  }
+  try { fillForm(draft || {}); restored = !!draft; }
+  catch (e){ setAside = setAsideDraft(store, srcKey, store.get(srcKey), "it did not fit the form"); fillForm({}); }
+  if (setAside){ $("#draft-status").textContent = setAside; if (/stays under/.test(setAside)) autosaveBlocked = true; }
+  else if (restored) $("#draft-status").textContent = "Draft restored from this browser";
+  renderPreview();
+  const hp = location.hash.slice(1).split("&");
+  selectTab(hp[0] || "register");
+  if (hp.includes("example")){ fillForm(EXAMPLE); renderPreview(); }
+  if (hp.includes("example=dc")){ fillForm(EXAMPLE_DC); renderPreview(); }
+  if (hp.includes("import")){ $("#btn-import").click(); $("#import-text").value = toMarkdown(regFromRaw(EXAMPLE_DC), null); readImport(); }
+  const demo = hp.find(x => x.startsWith("demo"));
+  if (demo){ /* screenshot aid: freeze an example in memory and load it, nothing downloads */
+    const which = demo === "demo=dc" ? "dc" : "tb";
+    const links = await demoChain(which);
+    const text = canonical(links.length > 1 ? makeChain(links) : links[0]);
+    if (hp[0] === "amend") await loadAmend(text, "demo, frozen in memory");
+    else {
+      await loadVerify(text, "demo, frozen in memory");
+      if (which === "dc"){
+        const i = loaded.rows.findIndex(r => r.h.id === "DC4");
+        if (i >= 0){ $(`#mv-${i}-value`).value = "0.002"; applyIntegrity(); }
+        $("#ver-demo-note").textContent = "Demo: the one value filled in, 0.002, is the median difference the Delegation Cliff campaign page reports for its revalidation certificate. The other rows wait for numbers the page does not give.";
+        $("#ver-demo-note").hidden = false;
+      }
+      if (hp.includes("kill") && loaded.kills.length){ loaded.fired.add(loaded.kills[0].id); renderKillBox(); applyIntegrity(); }
+    }
+    if (hp.includes("print")){ const res = await verifyChain(links); buildPrint(res.links[0].member, res.links[0].hash, res.links.slice(1)); }
+    if (hp.includes("witness")){
+      const r = links[0].registration;
+      $("#frozen-hash").textContent = links[0].sha256; $("#frozen-time").textContent = r.frozen_at_utc; $("#frozen-files").textContent = "demo, nothing downloaded";
+      renderWitness($("#frozen-witness"), { kind: "registration", title: r.title, hash: links[0].sha256, time: r.frozen_at_utc });
+      $("#frozen").hidden = false;
+    }
+  }
+  document.documentElement.dataset.booted = "1";
+})().catch(e => { console.error("[prereg-desk] boot failed:", e); showErrors($("#reg-errors"), ["The page failed to start: " + e.message]); }));
+
+/* =====================================================================
+   8. Console self-check
+   ===================================================================== */
+(async function selfCheck(){
+  const results = [];
+  const t = (name, cond) => results.push([cond ? "PASS" : "FAIL", name]);
+  const S = (h, m, f) => verdictFor(h, m, f).status;
+  try {
+    /* hashing and canonical form */
+    t('SHA-256("abc") matches FIPS 180-2 vector', await sha256Hex("abc") === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    const c = canonical({ b: 1, a: [{ d: 2, c: "x" }] });
+    t("canonical() sorts keys at every level, two-space indent", c === '{\n  "a": [\n    {\n      "c": "x",\n      "d": 2\n    }\n  ],\n  "b": 1\n}');
+    t("hash of the fixed canonical string matches shasum -a 256", await sha256Hex(c) === "e1dcde0b868efbe55f43957693532957bb98d34216790796e97f7932d7c9077c");
+    t("key order in the input does not change the hash", await sha256Hex(canonical({ a: [{ c: "x", d: 2 }], b: 1 })) === await sha256Hex(c));
+    t("moving a threshold changes the hash", await memberHash({ format: FORMAT, hypotheses: [{ id: "H1", threshold: 0.8 }] }) !== await memberHash({ format: FORMAT, hypotheses: [{ id: "H1", threshold: 0.7 }] }));
+    /* NFC */
+    t("NFC: composed and decomposed \u00e9 hash the same under format 2", await memberHash({ format: FORMAT, t: "caf\u00e9" }) === await memberHash({ format: FORMAT, t: "cafe\u0301" }));
+    t("NFC: keys are normalised too", canonical(nfcDeep({ "cafe\u0301": 1 })) === canonical({ "caf\u00e9": 1 }));
+    t("NFC: format 1 files keep their raw hash", await memberHash({ format: FORMAT_V1, t: "cafe\u0301" }) === await sha256Hex(canonical({ format: FORMAT_V1, t: "cafe\u0301" })));
+    t("NFC: the form normalises before hashing", regFromRaw({ title: "Re\u0301sume\u0301" }).title === "R\u00e9sum\u00e9");
+    /* numbers */
+    t("num reads a fraction 1/3", Math.abs(num("1/3") - 1 / 3) < 1e-15);
+    t("num reads a unicode minus", num("\u22120.05") === -0.05);
+    t("num refuses commas, percent, hex and Infinity", [num("0,8"), num("80%"), num("0x10"), num("Infinity"), num("1e400"), num("1/0")].every(Number.isNaN));
+    t("num treats blank as missing", num("  ") === null);
+    /* threshold */
+    const H = { type: "threshold", direction: ">=", threshold: 0.9, band_low: 0.85, band_high: 0.95 };
+    t("threshold: 0.91 against \u2265 0.90 is supported, in band", (j => j.status === "supported" && j.note === "inside the predicted band")(judge(H, { value: 0.91 })));
+    t("threshold: 0.899 against \u2265 0.90 is falsified", S(H, { value: 0.899 }) === "falsified");
+    t("threshold: equality counts for \u2265", S(H, { value: 0.9 }) === "supported");
+    t("threshold: strict > rejects equality", S({ type: "threshold", direction: ">", threshold: 0.03 }, { value: 0.03 }) === "falsified");
+    t("threshold: no number registered gives no verdict", S({ type: "threshold", direction: ">=", threshold: null }, { value: 0.5 }) === "incomplete");
+    t("threshold: a blank measured value waits; NaN is flagged", S(H, { value: null }) === "waiting" && S(H, { value: NaN }) === "nan");
+    t("legacy format 1 row with direction between reads as a band", inferType({ direction: "between", band_low: 0.6, band_high: 0.8 }) === "band" && S({ direction: "between", band_low: 0.6, band_high: 0.8 }, { value: 0.82 }) === "falsified");
+    /* band */
+    const B = { type: "band", band_low: -0.05, band_high: 0.05 };
+    t("band: both ends are included", S(B, { value: -0.05 }) === "supported" && S(B, { value: 0.05 }) === "supported");
+    t("band: just outside either end is falsified", S(B, { value: 0.0501 }) === "falsified" && judge(B, { value: -0.06 }).note === "below the band");
+    t("band: the published 0.002 sits inside \u00b10.05", S(B, { value: 0.002 }) === "supported");
+    t("band: a reversed band is incomplete", S({ type: "band", band_low: 1, band_high: 0 }, { value: 0.5 }) === "incomplete");
+    /* direction */
+    const D = { type: "direction", direction: "increase", min_effect: 0.05 };
+    t("direction: +0.05 meets a 0.05 minimum", S(D, { value: 0.05 }) === "supported");
+    t("direction: +0.04 falls short of the minimum", S(D, { value: 0.04 }) === "falsified");
+    t("direction: a move the other way is falsified", judge(D, { value: -0.2 }).note === "moved the other way");
+    t("direction: decrease reads the sign", S({ type: "direction", direction: "decrease", min_effect: 0 }, { value: -0.01 }) === "supported" && S({ type: "direction", direction: "decrease", min_effect: 0 }, { value: 0 }) === "falsified");
+    t("direction: blank minimum is incomplete", S({ type: "direction", direction: "increase", min_effect: null }, { value: 1 }) === "incomplete");
+    /* ratio */
+    const R = { type: "ratio", direction: "<=", threshold: 1 / 3 };
+    t("ratio: 1 \u00f7 3 meets \u2264 1/3", S(R, { num: 1, den: 3 }) === "supported");
+    t("ratio: 34 \u00f7 100 breaks \u2264 1/3", S(R, { num: 34, den: 100 }) === "falsified");
+    t("ratio: a zero denominator is not evaluable", S(R, { num: 5, den: 0 }) === "not-evaluable");
+    t("ratio: one missing quantity waits", S(R, { num: 5, den: null }) === "waiting");
+    /* ranking */
+    const K = { type: "ranking", min_gap: 0.2 };
+    t("ranking: 0.3 above 0.1 meets a 0.2 gap despite floating point", S(K, { a: 0.3, b: 0.1 }) === "supported");
+    t("ranking: a gap of 0.19 is falsified", S(K, { a: 0.29, b: 0.1 }) === "falsified");
+    t("ranking: d = 0 needs A strictly above B", S({ type: "ranking", min_gap: 0 }, { a: 1, b: 1 }) === "falsified" && S({ type: "ranking", min_gap: 0 }, { a: 1.01, b: 1 }) === "supported");
+    t("unknown hypothesis type gives no verdict", S({ type: "astrology" }, { value: 1 }) === "incomplete");
+    /* kill conditions */
+    const kills = normKills([{ id: "K1", text: "x", covers: ["H2"] }, { id: "K2", text: "y", covers: "all" }]);
+    t("kill: a fired condition makes its rows not evaluable", S(H, { value: 0.95 }, ["K1"]) === "not-evaluable");
+    t("kill: covers reads ids and all", killCovers(kills[0], "H2") && !killCovers(kills[0], "H1") && killCovers(kills[1], "H9"));
+    t("kill: a format 1 text field becomes one condition covering all", normKills("halt if broken")[0].covers[0] === "all");
+    t("kill: validation flags an id that is not registered", validate(regFromRaw({ title: "t", question: "q", hypotheses: [{ id: "H1", prediction: "p", t_measure: "m", t_value: "1" }], kill: [{ text: "k", covers: "H7" }] })).some(e => e.includes("H7")));
+    /* validation */
+    const dup = regFromRaw({ title: "t", question: "q", hypotheses: [{ id: "X", prediction: "p", t_measure: "m", t_value: "1" }, { id: "X", prediction: "p", t_measure: "m", t_value: "1" }] });
+    t("validation refuses duplicate ids", validate(dup).some(e => e.includes("already registered")));
+    t("validation: the Trial Balance example will not freeze with its blanks", validate(regFromRaw(EXAMPLE)).some(e => e.startsWith("TB5")) && validate(regFromRaw(EXAMPLE)).some(e => e.startsWith("TB6")));
+    t("validation: every Delegation Cliff blank is caught, DC2 and DC4 pass", (v => v.some(e => e.startsWith("DC1")) && v.some(e => e.startsWith("DC3")) && !v.some(e => /^DC[24]/.test(e)))(validate(regFromRaw(EXAMPLE_DC))));
+    /* chain */
+    const env = await makeRegEnvelope(regFromRaw(EXAMPLE_DC), "2026-10-01T00:00:00Z");
+    const r0 = await verifyChain([env]);
+    const a1 = await makeAddendum(r0, "Adds a row.", [rawToStored({ id: "A1-H1", type: "band", prediction: "p", b_measure: "m", b_lo: "0", b_hi: "1" }, true)], "2026-10-02T00:00:00Z");
+    const r1 = await verifyChain([env, a1]);
+    t("chain: the addendum's hash covers its parent's hash", a1.addendum.parent_sha256 === env.sha256 && r1.ok);
+    const a2 = await makeAddendum(r1, "Second.", [], "2026-10-03T00:00:00Z");
+    t("chain: a second addendum chains onto the first", a2.addendum.parent_sha256 === a1.sha256 && a2.addendum.root_sha256 === env.sha256 && (await verifyChain([env, a1, a2])).ok);
+    const tampered = JSON.parse(JSON.stringify(env)); tampered.registration.hypotheses[3].band_high = 0.5;
+    const rt = await verifyChain([tampered, a1]);
+    t("chain: moving a parent threshold breaks the parent and every addendum", !rt.links[0].ok && !rt.links[1].ok);
+    t("chain: reordering addenda breaks the chain", !(await verifyChain([env, a2, a1])).ok);
+    const reuse = await makeAddendum(r0, "Redefine DC4.", [rawToStored({ id: "DC4", type: "band", prediction: "p", b_measure: "m", b_lo: "-1", b_hi: "1" }, true)], "2026-10-02T00:00:00Z");
+    t("chain: an addendum cannot reuse a registered id", !(await verifyChain([env, reuse])).links[1].ok);
+    const early = await makeAddendum(r0, "Back-dated.", [], "2026-09-01T00:00:00Z");
+    t("chain: an addendum dated before its parent is flagged", !(await verifyChain([env, early])).ok);
+    const swapped = JSON.parse(JSON.stringify(a1)); swapped.addendum.text = "Different text.";
+    t("chain: editing addendum text breaks that link only", (rr => rr.links[0].ok && !rr.links[1].ok)(await verifyChain([env, swapped])));
+    t("chain: parseFile reads a chain bundle", parseFile(canonical(makeChain([env, a1]))).length === 2);
+    const v1reg = { format: FORMAT_V1, title: "old", hypotheses: [{ id: "H1", measure: "m", direction: ">=", threshold: 0.8, band_low: null, band_high: null }] };
+    t("chain: a format 1 registration still verifies", (await verifyChain([{ registration: v1reg, sha256: await sha256Hex(canonical(v1reg)) }])).ok);
+    /* hostile files */
+    const bad = s => { try { parseFile(s); return false; } catch (e){ return e.message; } };
+    t("file: non-array hypotheses are refused with a message", String(bad('{"registration":{"hypotheses":"x"}}')).includes("should be a list"));
+    t("file: a null hypothesis is refused with a message", String(bad('{"registration":{"hypotheses":[null]}}')).includes("not an object"));
+    let deep = "1"; for (let i = 0; i < 5000; i++) deep = `{"a":${deep}}`;
+    t("file: deep nesting is refused before hashing", String(bad(`{"registration":{"x":${deep}}}`)).includes("nested"));
+    t("file: a lone addendum asks for the chain file", String(bad(canonical(a1))).includes("chain file"));
+    /* markdown */
+    const rt2 = parseMarkdown(toMarkdown(regFromRaw(EXAMPLE_DC), null));
+    const back = regFromRaw(Object.assign({}, rt2.fields, { hypotheses: rt2.hypotheses.map(x => x.raw), kill: rt2.kill }));
+    const orig = regFromRaw(EXAMPLE_DC);
+    t("import: the desk's own markdown reads back to the same registration", canonical(back) === canonical(orig));
+    const rtb = parseMarkdown(toMarkdown(regFromRaw(EXAMPLE), null));
+    t("import: Trial Balance round trip keeps the ratio and kill condition", canonical(regFromRaw(Object.assign({}, rtb.fields, { hypotheses: rtb.hypotheses.map(x => x.raw), kill: rtb.kill }))) === canonical(regFromRaw(EXAMPLE)));
+    const fx = parseMarkdown("# PREREG-FIXTURE: synthetic\n\n## 1. Question\n\nDoes it parse?\n\n## 4. Hypotheses, as numbers, before any run\n\n- **HX1 (overall).** Rate is 0.08, supported if within the\n  band 0.03 to 0.18.\n- **HX2 (judge).** Agreement is at least 0.70 (band 0.70 to\n  0.95). Kill below 0.50.\n\n## 5. Kill conditions\n\n1. Agreement below 0.50 (HX2 kill): nothing is quoted.\n2. A missing response is rerun.\n");
+    const fh = fx.hypotheses.map(x => rawToStored(x.raw, true));
+    t("import: house bullets give a band and a threshold with its band", fh.length === 2 && fh[0].type === "band" && fh[0].band_low === 0.03 && fh[0].band_high === 0.18 && fh[1].type === "threshold" && fh[1].direction === ">=" && fh[1].threshold === 0.7 && fh[1].band_high === 0.95);
+    t("import: kill conditions read the ids they mention", fx.kill.length === 2 && fx.kill[0].covers === "HX2" && fx.kill[1].covers === "all");
+    const ft = parseMarkdown("# T\n\n## 4. Hypotheses\n\n| id | quantity | dir | threshold |\n|---|---|---|---:|\n| F1 | corpus size | min | 500 |\n| F2 | max prompt tokens | max | 7,936 |\n| F3 | error rate | max | 2% |\n");
+    const ftt = ft.hypotheses.map(x => rawToStored(x.raw, true));
+    t("import: a house table reads min, max, thousands and percent", ftt.length === 3 && ftt[0].direction === ">=" && ftt[0].threshold === 500 && ftt[1].threshold === 7936 && ftt[2].threshold === 0.02);
+    t("import: CRLF line ends parse the same as LF", parseMarkdown(toMarkdown(regFromRaw(EXAMPLE_DC), null).replace(/\n/g, "\r\n")).hypotheses.length === 4);
+    /* witness, escaping */
+    const wl = witnessLine({ kind: "registration", title: "A | B\nC", hash: "ab", time: "2026-01-01T00:00:00Z" });
+    t("witness: the record is one line, pipes in the title neutralised", !/\n/.test(wl) && wl === "PREREG | A / B C | sha256:ab | frozen 2026-01-01T00:00:00Z (UTC, browser clock)");
+    t("witness: the commit command quotes safely", gitCommand("it's") === "git commit --allow-empty -m 'it'\\''s'");
+    t("escaping: esc() neutralises a script tag and an attribute break", esc('<script>"x"<\/script>') === "&lt;script&gt;&quot;x&quot;&lt;/script&gt;");
+    /* misc */
+    const fz = deepFreeze({ hypotheses: [{ threshold: 0.9 }] });
+    try { fz.hypotheses[0].threshold = 0.5; } catch (_){}
+    t("a loaded registration cannot be changed in memory", fz.hypotheses[0].threshold === 0.9);
+    t("slug of the worked example title is 'trial-balance'", slugify(EXAMPLE.title) === "trial-balance");
+    /* second independent check: one test per code defect */
+    const protoText = '{"format":"prereg-desk/2","__proto__":{"x":1},"a":1}';
+    t("integrity: a member named __proto__ is kept and hashed like shasum over the canonical text", await memberHash(JSON.parse(protoText)) === "b19051c2d51e9f013d871d63973fec7bf1a48a235c24d0503aa680f041ff4804" && canonical(JSON.parse(protoText)).includes('"__proto__"'));
+    t("integrity: moving a value under __proto__ changes the hash", await memberHash(JSON.parse(protoText)) !== await memberHash(JSON.parse(protoText.replace('"x":1', '"x":2'))));
+    t("lookups: types constructor, __proto__ and toString are refused loudly", ["constructor", "__proto__", "toString"].every(ty => String(bad(`{"registration":{"hypotheses":[{"id":"H1","type":"${ty}"}]}}`)).includes("unrecognised type")));
+    t("lookups: a direction named constructor gives no verdict", S({ type: "threshold", direction: "constructor", threshold: 1 }, { value: 5 }) === "incomplete" && S({ type: "ratio", direction: "toString", threshold: 1 }, { num: 1, den: 1 }) === "incomplete");
+    t("drafts: invalid JSON, arrays and strings are not used", !classifyDraft("{oops").ok && !classifyDraft("[1]").ok && !classifyDraft('"x"').ok && classifyDraft('{"title":"t"}').ok);
+    const mem = { d: { k: "{oops" }, set(k, v){ this.d[k] = v; return "ok"; }, clear(k){ delete this.d[k]; return true; } };
+    const msg = setAsideDraft(mem, "k", "{oops", "it is not valid JSON");
+    const asideKey = Object.keys(mem.d).find(k => k.includes("set-aside"));
+    t("drafts: an unreadable draft is moved to a set-aside key and the message names it", !("k" in mem.d) && asideKey && mem.d[asideKey] === "{oops" && msg.includes(asideKey));
+    const full = { d: { k: "{oops" }, set(){ return "quota"; }, clear(k){ delete this.d[k]; return true; } };
+    t("drafts: if it cannot be moved aside it stays where it was", setAsideDraft(full, "k", "{oops", "x").includes("stays under") && full.d.k === "{oops");
+    t("public hash: the first 64-hex token is taken from a pasted record", extractHash(witnessLine({ kind: "addendum", title: "T", hash: "a".repeat(64), time: "2026-01-01T00:00:00Z", seq: 1, parent: "b".repeat(64) })) === "a".repeat(64) && extractHash("sha256:" + "C".repeat(64)) === "c".repeat(64));
+    t("ratio: a negative quantity is flagged in the note", /negative/.test(judge({ type: "ratio", direction: "<=", threshold: 1 }, { num: -1, den: 3 }).note) && !/negative/.test(judge({ type: "ratio", direction: "<=", threshold: 1 }, { num: 1, den: 3 }).note));
+    t("dates: freeze times compare as instants, so an offset cannot hide a back-dated addendum", instant("2026-10-01T00:00:00+05:00") < instant("2026-09-30T20:00:00Z") && instant("garbage") === null);
+    const offset = await makeAddendum(r0, "Offset time.", [], "2026-10-01T04:00:00+05:00");
+    t("dates: an addendum written with an offset before its parent's instant is flagged", !(await verifyChain([env, offset])).ok);
+    const tf = document.createElement("form"); tf.innerHTML = '<input><button></button><textarea disabled></textarea>';
+    lockForm(tf, true); const lockedAll = [...tf.elements].every(x => x.disabled); lockForm(tf, false);
+    t("freeze: inputs are disabled while hashing and restored after, leaving already-disabled ones alone", lockedAll && !tf.elements[0].disabled && !tf.elements[1].disabled && tf.elements[2].disabled);
+    /* print: save whatever the page had built, test, put it back */
+    const pd = $("#print-doc"), keepKids = [...pd.childNodes], keepStyle = $("#print-page-style").textContent;
+    buildPrint(tampered.registration, rt.links[0].hash, [], { broken: true });
+    const ptxt = pd.textContent, pstyle = $("#print-page-style").textContent;
+    t("print: a broken chain is stamped FAILED ITS HASH CHECK, with no hash in the footer and no public record", ptxt.includes("FAILED ITS HASH CHECK") && !ptxt.includes("Public record") && !pstyle.includes(rt.links[0].hash) && !ptxt.includes(rt.links[0].hash));
+    buildNotice("nothing here");
+    t("print: an empty tab prints a notice, not the draft", pd.textContent.includes("Nothing to print") && !pd.textContent.includes("1. Question"));
+    pd.replaceChildren(...keepKids); $("#print-page-style").textContent = keepStyle;
+    /* DOM state checks run after boot, with the live state saved and restored */
+    await bootDone;
+    const snapV = loaded ? { text: loaded.text, name: loaded.name, vals: loaded.inputs.map(a => a.map(i => i.value)), fired: [...loaded.fired], pub: $("#public-hash").value, note: $("#ver-demo-note").hidden } : null;
+    const snapA = amendState ? { text: amendState.text, name: amendState.name } : null, snapAF = amendFrozen;
+    const goodText = canonical(makeChain([env, a1]));
+    await loadVerify(goodText, "check");
+    await loadVerify("{", "bad");
+    t("failed load: Verify clears the previous table, summary and kill box", loaded === null && $("#ver-table-wrap").hidden && $("#ver-kill").hidden && !$("#ver-summary h2") && $("#ver-errors").textContent.includes("not valid JSON"));
+    await loadAmend(goodText, "check"); amendFrozen = { res: r1 };
+    await loadAmend("{", "bad");
+    t("failed load: Amend clears its state, its frozen addendum and its form", amendState === null && amendFrozen === null && $("#amend").hidden && !$("#a-summary h2"));
+    await loadAmend(goodText, "check");
+    amendFrozen = { res: r1 }; $("#a-frozen").hidden = false;
+    $("#btn-add-ah").click();
+    const blk = $("#a-hyps").lastElementChild, idIn = blk.querySelector('[data-k="id"]');
+    idIn.value = "ZZ9"; idIn.dispatchEvent(new Event("input", { bubbles: true })); idIn.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    t("amend: editing an id renumbers the legend and the remove button's name", blk.querySelector(".hid").textContent === "Hypothesis ZZ9" && blk.querySelector(".rm").getAttribute("aria-label").endsWith("ZZ9"));
+    blk.querySelector(".rm").click();
+    t("amend: removing a new hypothesis clears the frozen panel", amendFrozen === null && $("#a-frozen").hidden);
+    if (snapA) await loadAmend(snapA.text, snapA.name); else resetAmend();
+    if (snapAF){ amendFrozen = snapAF; $("#a-frozen").hidden = false; }
+    showErrors($("#a-errors"), []);
+    if (snapV){
+      await loadVerify(snapV.text, snapV.name);
+      loaded.inputs.forEach((a, i) => a.forEach((inp, j) => { inp.value = (snapV.vals[i] || [])[j] || ""; }));
+      snapV.fired.forEach(k => loaded.fired.add(k)); $("#public-hash").value = snapV.pub; $("#ver-demo-note").hidden = snapV.note;
+      renderSummary(); renderKillBox(); applyIntegrity();
+    } else { loaded = null; renderVerify(); }
+    showErrors($("#ver-errors"), []);
+
+  } catch (e){ results.push(["FAIL", "self-check threw: " + e.message]); }
+  const failed = results.filter(r => r[0] === "FAIL").length;
+  console.log(`[prereg-desk self-check] ${results.length - failed}/${results.length} passed`);
+  results.forEach(r => (r[0] === "FAIL" ? console.error : console.log)(`[prereg-desk self-check] ${r[0]} ${r[1]}`));
+  document.documentElement.dataset.selfcheck = failed ? "fail" : "pass";
+  document.documentElement.dataset.selfcheckCount = `${results.length - failed}/${results.length}`;
+})();
+</script>
+</body>
+</html>
